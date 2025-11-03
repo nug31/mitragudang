@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { Warehouse } from 'lucide-react';
+import { Warehouse, Package, Box, Boxes } from 'lucide-react';
 
 interface SplashScreenProps {
   onComplete: () => void;
   minDuration?: number;
 }
 
-const SplashScreen: React.FC<SplashScreenProps> = ({ 
-  onComplete, 
-  minDuration = 2500 
+const SplashScreen: React.FC<SplashScreenProps> = ({
+  onComplete,
+  minDuration = 4000 // Increased from 2500 to 4000ms (4 seconds)
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Simulate loading progress
+    // Simulate loading progress - slower animation
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + 2;
+        return prev + 1; // Changed from +2 to +1 for slower progress
       });
-    }, 30);
+    }, 50); // Changed from 30ms to 50ms for slower animation
 
     // Hide splash screen after minimum duration
     const timer = setTimeout(() => {
@@ -45,8 +45,34 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 z-[9999] flex items-center justify-center overflow-hidden">
-      {/* Animated background particles */}
+      {/* Warehouse Background Image with Overlay */}
       <div className="absolute inset-0 overflow-hidden">
+        {/* Background Pattern - Warehouse Shelves */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '80px 80px'
+          }} />
+        </div>
+
+        {/* Floating Warehouse Icons */}
+        <div className="absolute top-10 left-10 opacity-20 animate-float">
+          <Package className="w-16 h-16 text-white" />
+        </div>
+        <div className="absolute top-20 right-20 opacity-15 animate-float" style={{ animationDelay: '1s' }}>
+          <Box className="w-20 h-20 text-white" />
+        </div>
+        <div className="absolute bottom-20 left-20 opacity-20 animate-float" style={{ animationDelay: '2s' }}>
+          <Boxes className="w-24 h-24 text-white" />
+        </div>
+        <div className="absolute bottom-32 right-32 opacity-15 animate-float" style={{ animationDelay: '1.5s' }}>
+          <Package className="w-18 h-18 text-white" />
+        </div>
+
+        {/* Animated background particles */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl animate-pulse-slow" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary-500/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
         <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-accent-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '0.5s' }} />

@@ -7,16 +7,19 @@ Aplikasi Gudang Mitra sekarang memiliki **splash screen animasi** yang muncul sa
 ## 🎨 Desain
 
 - **Logo Gudang Mitra** dengan animasi scale-in dan glow effect
+- **Warehouse Background** dengan grid pattern dan floating icons (Package, Box, Boxes)
 - **Gradient background** dengan animated particles
-- **Progress bar** dengan gradient warna
+- **Progress bar** dengan gradient warna (slower animation - 4 seconds)
 - **Smooth fade-in/fade-out** transitions
 - **Responsive design** untuk semua ukuran layar
+- **Floating warehouse icons** dengan animasi yang berbeda-beda
 
 ## 🚀 Cara Kerja
 
-1. **Pertama kali buka aplikasi** → Splash screen muncul selama ~2.5 detik
+1. **Pertama kali buka aplikasi** → Splash screen muncul selama ~4 detik (slower, more cinematic)
 2. **Refresh halaman** → Splash screen tidak muncul lagi (disimpan di session storage)
 3. **Buka tab baru** → Splash screen muncul lagi
+4. **Background warehouse** → Grid pattern + floating icons (Package, Box, Boxes) dengan animasi float
 
 ## 🧪 Testing
 
@@ -43,13 +46,23 @@ https://gudang-mitra-app.netlify.app/?splash=true
 
 ## 🎯 Konfigurasi
 
-Durasi splash screen dapat diubah di `src/App.tsx`:
+Durasi splash screen dapat diubah di `src/components/ui/SplashScreen.tsx`:
 
 ```tsx
-<SplashScreen 
-  onComplete={handleSplashComplete} 
-  minDuration={2500} // Ubah durasi di sini (dalam ms)
-/>
+const SplashScreen: React.FC<SplashScreenProps> = ({
+  onComplete,
+  minDuration = 4000 // Ubah durasi di sini (dalam ms) - default 4 detik
+}) => {
+  // ...
+
+  // Progress speed
+  const progressInterval = setInterval(() => {
+    setProgress((prev) => {
+      if (prev >= 100) return 100;
+      return prev + 1; // Ubah increment untuk kecepatan progress (1 = slow, 2 = fast)
+    });
+  }, 50); // Ubah interval untuk smoothness (50ms = smooth, 30ms = faster)
+}
 ```
 
 ## 🎨 Customization
@@ -107,7 +120,8 @@ Edit keyframes di `src/index.css`:
 2. **Ubah durasi** sesuai kebutuhan:
    - Terlalu cepat: User tidak sempat lihat
    - Terlalu lama: User bosan menunggu
-   - **Rekomendasi**: 2000-3000ms
+   - **Current**: 4000ms (4 detik) - cinematic experience
+   - **Rekomendasi**: 3000-5000ms untuk splash screen yang impressive
 
 3. **Testing di berbagai device**:
    - Desktop: Animasi smooth
