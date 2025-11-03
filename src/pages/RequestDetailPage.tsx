@@ -410,7 +410,7 @@ const RequestDetailPage: React.FC = () => {
                           <div>
                             <p className="font-medium">Last Updated</p>
                             <p className="text-sm text-gray-600">
-                              {formatDate(request.updated_at || request.updatedAt)}
+                              {formatDateWithTime(request.updated_at || request.updatedAt)}
                             </p>
                           </div>
                         </div>
