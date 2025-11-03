@@ -187,16 +187,13 @@ const RequestDetailPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  // Format date with time (for Created date)
+  const formatDateWithTime = (dateString: string) => {
     if (!dateString) return "N/A";
 
-    // Create a date object from the UTC string
     const date = new Date(dateString);
-
-    // Check if date is valid
     if (isNaN(date.getTime())) return "Invalid Date";
 
-    // Format in Indonesian timezone (WIB - UTC+7) - with date and time
     const dateStr = date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -212,6 +209,21 @@ const RequestDetailPage: React.FC = () => {
     });
 
     return `${dateStr} at ${timeStr} WIB`;
+  };
+
+  // Format date only (for Delivery date)
+  const formatDateOnly = (dateString: string) => {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Jakarta"
+    });
   };
 
   // Comment out the authentication check for now to allow viewing request details without being logged in
@@ -374,7 +386,7 @@ const RequestDetailPage: React.FC = () => {
                       <div>
                         <p className="font-medium">Created</p>
                         <p className="text-sm text-gray-600">
-                          {formatDate(request.created_at || request.createdAt)}
+                          {formatDateWithTime(request.created_at || request.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -384,7 +396,7 @@ const RequestDetailPage: React.FC = () => {
                       <div>
                         <p className="font-medium">Requested Delivery Date</p>
                         <p className="text-sm text-gray-600">
-                          {formatDate(
+                          {formatDateOnly(
                             request.due_date || request.requestedDeliveryDate || request.created_at || request.createdAt
                           )}
                         </p>

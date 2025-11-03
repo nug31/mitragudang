@@ -60,16 +60,13 @@ const RequestCard: React.FC<RequestCardProps> = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
+  // Format date with time (for Created date)
+  const formatDateWithTime = (dateString: string) => {
     if (!dateString) return "N/A";
 
-    // Create a date object from the UTC string
     const date = new Date(dateString);
-
-    // Check if date is valid
     if (isNaN(date.getTime())) return "Invalid Date";
 
-    // Format in Indonesian timezone (WIB - UTC+7) - with date and time
     const dateStr = date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -85,6 +82,21 @@ const RequestCard: React.FC<RequestCardProps> = ({
     });
 
     return `${dateStr}, ${timeStr}`;
+  };
+
+  // Format date only (for Delivery date)
+  const formatDateOnly = (dateString: string) => {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "Asia/Jakarta"
+    });
   };
 
   const canEditOrDelete = status === "pending";
@@ -104,9 +116,9 @@ const RequestCard: React.FC<RequestCardProps> = ({
             </div>
             <div className="flex items-center mt-2 text-sm text-gray-600">
               <Clock className="h-4 w-4 mr-1" />
-              <span>Created: {formatDate(createdAt)}</span>
+              <span>Created: {formatDateWithTime(createdAt)}</span>
               <Calendar className="h-4 w-4 ml-4 mr-1" />
-              <span>Delivery: {formatDate(requestedDeliveryDate)}</span>
+              <span>Delivery: {formatDateOnly(requestedDeliveryDate)}</span>
             </div>
           </div>
           <div className="mt-3 md:mt-0 flex items-center">
