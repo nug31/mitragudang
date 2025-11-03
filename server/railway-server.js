@@ -2437,7 +2437,7 @@ app.use((error, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Railway server running on port ${PORT}`);
   console.log(`📝 Available endpoints:`);
   console.log(`   GET  /`);
