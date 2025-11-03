@@ -196,13 +196,22 @@ const RequestDetailPage: React.FC = () => {
     // Check if date is valid
     if (isNaN(date.getTime())) return "Invalid Date";
 
-    // Format in Indonesian timezone (WIB - UTC+7) - date only, no time
-    return date.toLocaleDateString("en-US", {
+    // Format in Indonesian timezone (WIB - UTC+7) - with date and time
+    const dateStr = date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
       timeZone: "Asia/Jakarta"
     });
+
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Jakarta"
+    });
+
+    return `${dateStr} at ${timeStr} WIB`;
   };
 
   // Comment out the authentication check for now to allow viewing request details without being logged in
