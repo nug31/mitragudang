@@ -158,6 +158,9 @@ const InventoryList: React.FC<InventoryListProps> = ({
                     +
                   </Button>
                 </div>
+                <div className="mt-2 text-center text-sm font-medium text-gray-600">
+                  Unit: {item.unit || 'pcs'}
+                </div>
                 {item.quantity <= item.minQuantity && (
                   <div className="mt-2 flex items-center justify-center text-amber-600 text-sm font-medium">
                     <AlertTriangle className="h-4 w-4 mr-1" />

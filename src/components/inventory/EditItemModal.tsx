@@ -25,6 +25,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     quantity: item.quantity,
     minQuantity: item.minQuantity,
     lastRestocked: item.lastRestocked,
+    unit: item.unit || "pcs", // Default to item's unit or 'pcs'
   });
 
   const [loading, setLoading] = useState(false);
@@ -37,6 +38,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     { value: "software", label: "Software" },
     { value: "other", label: "Other" },
   ]);
+
+  const unitOptions = [
+    { value: "pcs", label: "Pieces (pcs)" },
+    { value: "rim", label: "Rim" },
+    { value: "box", label: "Box" },
+    { value: "pack", label: "Pack" },
+  ];
 
   // Function to fetch categories from the database
   const fetchCategories = async () => {
@@ -70,6 +78,8 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         updates.quantity = formData.quantity;
       if (formData.minQuantity !== item.minQuantity)
         updates.minQuantity = formData.minQuantity;
+      if (formData.unit !== item.unit)
+        updates.unit = formData.unit;
 
       // If quantity changed, update lastRestocked
       if (formData.quantity !== item.quantity) {
@@ -132,7 +142,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
             required
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Input
               label="Quantity"
               type="number"
@@ -147,8 +157,18 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
               required
             />
 
+            <Select
+              label="Unit"
+              value={formData.unit}
+              onChange={(e) =>
+                setFormData({ ...formData, unit: e.target.value })
+              }
+              options={unitOptions}
+              required
+            />
+
             <Input
-              label="Minimum Quantity"
+              label="Min Quantity"
               type="number"
               min="0"
               value={formData.minQuantity.toString()}

@@ -19,6 +19,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ onClose, onAdd }) => {
     category: "electronics" as ItemCategory,
     quantity: 0,
     minQuantity: 0,
+    unit: "pcs", // Default unit
   });
 
   const [categoryOptions, setCategoryOptions] = useState([
@@ -29,6 +30,13 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ onClose, onAdd }) => {
     { value: "software", label: "Software" },
     { value: "other", label: "Other" },
   ]);
+
+  const unitOptions = [
+    { value: "pcs", label: "Pieces (pcs)" },
+    { value: "rim", label: "Rim" },
+    { value: "box", label: "Box" },
+    { value: "pack", label: "Pack" },
+  ];
 
   // Function to fetch categories from the database
   const fetchCategories = async () => {
@@ -93,7 +101,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ onClose, onAdd }) => {
             required
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Input
               label="Quantity"
               type="number"
@@ -105,8 +113,18 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ onClose, onAdd }) => {
               required
             />
 
+            <Select
+              label="Unit"
+              value={formData.unit}
+              onChange={(e) =>
+                setFormData({ ...formData, unit: e.target.value })
+              }
+              options={unitOptions}
+              required
+            />
+
             <Input
-              label="Minimum Quantity"
+              label="Min Quantity"
               type="number"
               min="0"
               value={formData.minQuantity.toString()}
