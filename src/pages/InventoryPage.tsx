@@ -177,6 +177,10 @@ const InventoryPage: React.FC = () => {
         setItems((prev) =>
           prev.map((item) => (item.id === id ? updatedItem : item))
         );
+
+        // Force refresh from server to ensure we have latest data
+        console.log("Item updated, refreshing all items from server...");
+        await fetchItems();
       } else {
         setError("Failed to update item");
       }
