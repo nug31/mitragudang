@@ -331,7 +331,9 @@ const RequestDetailPage: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Quantity</p>
-                          <p className="font-medium">{request.quantity || 'Not specified'}</p>
+                          <p className="font-medium">
+                            {request.quantity || 'Not specified'} {request.unit || 'pcs'}
+                          </p>
                         </div>
                       </>
                     )}

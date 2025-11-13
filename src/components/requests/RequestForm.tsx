@@ -26,6 +26,7 @@ const RequestForm: React.FC<RequestFormProps> = ({
   const [itemName, setItemName] = useState("");
   const [itemId, setItemId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [unit, setUnit] = useState("pcs"); // Default unit
   const [priority, setPriority] = useState<RequestPriority>("medium");
   const [description, setDescription] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -40,6 +41,8 @@ const RequestForm: React.FC<RequestFormProps> = ({
     if (selectedItem) {
       setItemName(selectedItem.name);
       setItemId(selectedItem.id);
+      // Set default unit from item or default to 'pcs'
+      setUnit(selectedItem.unit || "pcs");
       // Set a default description based on the item
       setDescription(
         `Request for ${selectedItem.name}${
@@ -54,6 +57,18 @@ const RequestForm: React.FC<RequestFormProps> = ({
     { value: "medium", label: "Medium Priority" },
     { value: "low", label: "Low Priority" },
   ];
+
+  const unitOptions = [
+    { value: "pcs", label: "Pieces (pcs)" },
+    { value: "rim", label: "Rim" },
+    { value: "box", label: "Box" },
+    { value: "pack", label: "Pack" },
+  ];
+
+  // Check if item is paper-related (kertas)
+  const isPaperItem = itemName.toLowerCase().includes("kertas") ||
+                      itemName.toLowerCase().includes("paper") ||
+                      itemName.toLowerCase().includes("hvs");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +95,7 @@ const RequestForm: React.FC<RequestFormProps> = ({
         itemId: requestItemId,
         itemName,
         quantity,
+        unit, // Include unit in request
         priority,
         status: "pending",
         description,
@@ -93,6 +109,7 @@ const RequestForm: React.FC<RequestFormProps> = ({
       // Reset form
       setItemName("");
       setQuantity(1);
+      setUnit("pcs");
       setPriority("medium");
       setDescription("");
       setDeliveryDate("");
@@ -189,7 +206,7 @@ const RequestForm: React.FC<RequestFormProps> = ({
               disabled={!!selectedItem}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
                 id="quantity"
                 label="Quantity"
@@ -197,6 +214,15 @@ const RequestForm: React.FC<RequestFormProps> = ({
                 min={1}
                 value={quantity.toString()}
                 onChange={(e) => setQuantity(parseInt(e.target.value))}
+                required
+              />
+
+              <Select
+                id="unit"
+                label="Unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                options={unitOptions}
                 required
               />
 

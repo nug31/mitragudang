@@ -25,6 +25,7 @@ const RequestCard: React.FC<RequestCardProps> = ({
     id,
     itemName,
     quantity,
+    unit,
     priority,
     status,
     description,
@@ -126,7 +127,7 @@ const RequestCard: React.FC<RequestCardProps> = ({
               {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
             </Badge>
             <span className="ml-3 text-gray-700 bg-gray-100 px-2 py-1 rounded text-sm">
-              Qty: {quantity}
+              Qty: {quantity} {unit || 'pcs'}
             </span>
           </div>
         </div>

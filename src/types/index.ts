@@ -27,6 +27,7 @@ export interface Item {
   lastRestocked?: string;
   price?: number;
   isActive?: number;
+  unit?: string; // Unit of measurement (pcs, rim, box, etc.)
 }
 
 export interface ItemRequest {
@@ -47,6 +48,7 @@ export interface ItemRequest {
   requesterName?: string;
   requesterEmail?: string;
   items?: any[];
+  unit?: string; // Unit of measurement for the requested item (pcs, rim, box, etc.)
 }
 
 // Chat functionality removed

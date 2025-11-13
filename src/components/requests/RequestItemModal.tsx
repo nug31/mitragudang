@@ -26,6 +26,7 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [quantityInput, setQuantityInput] = useState("1");
+  const [unit, setUnit] = useState(item.unit || "pcs"); // Default to item's unit or 'pcs'
   const [priority, setPriority] = useState<RequestPriority>("medium");
   const [description, setDescription] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -38,6 +39,13 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
     { value: "high", label: "High Priority" },
     { value: "medium", label: "Medium Priority" },
     { value: "low", label: "Low Priority" },
+  ];
+
+  const unitOptions = [
+    { value: "pcs", label: "Pieces (pcs)" },
+    { value: "rim", label: "Rim" },
+    { value: "box", label: "Box" },
+    { value: "pack", label: "Pack" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,6 +117,7 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
           itemId: itemId,
           itemName: item.name,
           quantity,
+          unit, // Include unit in request
           priority,
           status: "pending",
           description,
@@ -123,6 +132,7 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
         // Reset form
         setQuantity(1);
         setQuantityInput("1");
+        setUnit(item.unit || "pcs");
         setPriority("medium");
         setDescription("");
         setDeliveryDate("");
@@ -190,32 +200,42 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit}>
-          <Input
-            label="Quantity"
-            type="number"
-            min="1"
-            max={item.quantity}
-            value={quantityInput}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-              setQuantityInput(inputValue);
-              
-              // Parse the value, allowing empty string during editing
-              const parsedValue = inputValue === "" ? 0 : parseInt(inputValue);
-              if (!isNaN(parsedValue)) {
-                setQuantity(parsedValue);
-              }
-            }}
-            onBlur={(e) => {
-              // On blur, ensure we have a valid value
-              const inputValue = e.target.value;
-              if (inputValue === "" || parseInt(inputValue) < 1) {
-                setQuantityInput("1");
-                setQuantity(1);
-              }
-            }}
-            required
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <Input
+              label="Quantity"
+              type="number"
+              min="1"
+              max={item.quantity}
+              value={quantityInput}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                setQuantityInput(inputValue);
+
+                // Parse the value, allowing empty string during editing
+                const parsedValue = inputValue === "" ? 0 : parseInt(inputValue);
+                if (!isNaN(parsedValue)) {
+                  setQuantity(parsedValue);
+                }
+              }}
+              onBlur={(e) => {
+                // On blur, ensure we have a valid value
+                const inputValue = e.target.value;
+                if (inputValue === "" || parseInt(inputValue) < 1) {
+                  setQuantityInput("1");
+                  setQuantity(1);
+                }
+              }}
+              required
+            />
+
+            <Select
+              label="Unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              options={unitOptions}
+              required
+            />
+          </div>
 
           <Select
             label="Priority"
