@@ -218,6 +218,7 @@ app.get("/api/items", async (req, res) => {
       borrowedQuantity: hasBorrowedQuantity && typeof item.borrowed_quantity === "number" ? item.borrowed_quantity : 0,
       status: item.quantity > 0 ? (item.quantity <= item.minQuantity ? "low-stock" : "in-stock") : "out-of-stock",
       price: item.price || 0,
+      unit: item.unit || 'pcs',
     }));
 
     console.log(`Returning ${formattedItems.length} formatted items`);
@@ -238,7 +239,7 @@ app.post("/api/items", async (req, res) => {
     console.log("POST /api/items - Creating new item");
     console.log("Request body:", req.body);
 
-    const { name, description, category, quantity, minQuantity, price } = req.body;
+    const { name, description, category, quantity, minQuantity, price, unit } = req.body;
 
     // Validate required fields
     if (!name || !description || !category) {
@@ -256,9 +257,9 @@ app.post("/api/items", async (req, res) => {
 
     // Insert the new item
     const [result] = await pool.query(`
-      INSERT INTO items (name, description, category, quantity, minQuantity, price, status, isActive)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-    `, [name, description, category, quantity || 0, minQuantity || 0, price || 0, status]);
+      INSERT INTO items (name, description, category, quantity, minQuantity, price, status, isActive, unit)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+    `, [name, description, category, quantity || 0, minQuantity || 0, price || 0, status, unit || 'pcs']);
 
     if (result.insertId) {
       // Fetch the created item
@@ -275,6 +276,7 @@ app.post("/api/items", async (req, res) => {
         minQuantity: typeof item.minQuantity === "number" ? item.minQuantity : 0,
         status: item.quantity > 0 ? (item.quantity <= item.minQuantity ? "low-stock" : "in-stock") : "out-of-stock",
         price: item.price || 0,
+        unit: item.unit || 'pcs',
       };
 
       console.log("Item created successfully:", formattedItem);
@@ -319,7 +321,7 @@ app.put("/api/items/:id", async (req, res) => {
     const updateValues = [];
 
     // Only update fields that are provided
-    const allowedFields = ['name', 'description', 'category', 'quantity', 'minQuantity', 'price', 'lastRestocked'];
+    const allowedFields = ['name', 'description', 'category', 'quantity', 'minQuantity', 'price', 'lastRestocked', 'unit'];
 
     Object.entries(updates).forEach(([key, value]) => {
       if (allowedFields.includes(key) && value !== undefined) {
@@ -359,7 +361,8 @@ app.put("/api/items/:id", async (req, res) => {
         minQuantity: typeof updatedItem.minQuantity === "number" ? updatedItem.minQuantity : 0,
         status: updatedItem.quantity > 0 ? (updatedItem.quantity <= updatedItem.minQuantity ? "low-stock" : "in-stock") : "out-of-stock",
         price: updatedItem.price || 0,
-        lastRestocked: updatedItem.lastRestocked
+        lastRestocked: updatedItem.lastRestocked,
+        unit: updatedItem.unit || 'pcs'
       };
 
       console.log("Item updated successfully:", formattedItem);
