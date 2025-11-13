@@ -59,6 +59,34 @@ try {
   console.error('❌ Error creating database pool:', error);
 }
 
+// Auto-migrate: Add unit column if it doesn't exist
+async function ensureUnitColumn() {
+  try {
+    console.log('🔧 Checking if unit column exists in items table...');
+    const [columns] = await pool.query('DESCRIBE items');
+    const hasUnitColumn = columns.some(col => col.Field === 'unit');
+
+    if (!hasUnitColumn) {
+      console.log('⚠️  Unit column not found. Adding it now...');
+      await pool.query(`
+        ALTER TABLE items
+        ADD COLUMN unit VARCHAR(50) DEFAULT 'pcs' AFTER quantity
+      `);
+      console.log('✅ Unit column added successfully!');
+    } else {
+      console.log('✅ Unit column already exists');
+    }
+  } catch (error) {
+    console.error('❌ Error checking/adding unit column:', error.message);
+    // Don't crash the server, just log the error
+  }
+}
+
+// Run migration on startup
+if (pool) {
+  ensureUnitColumn().catch(err => console.error('Migration error:', err));
+}
+
 // Test endpoint
 app.get('/', (req, res) => {
   res.json({
