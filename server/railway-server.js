@@ -283,11 +283,24 @@ app.post("/api/items", async (req, res) => {
       status = quantity <= minQuantity ? "low-stock" : "in-stock";
     }
 
-    // Insert the new item
-    const [result] = await pool.query(`
-      INSERT INTO items (name, description, category, quantity, minQuantity, price, status, isActive, unit)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
-    `, [name, description, category, quantity || 0, minQuantity || 0, price || 0, status, unit || 'pcs']);
+    // Check if unit column exists
+    const [columns] = await pool.query('DESCRIBE items');
+    const hasUnitColumn = columns.some(col => col.Field === 'unit');
+
+    // Insert the new item (with or without unit column)
+    let result;
+    if (hasUnitColumn) {
+      [result] = await pool.query(`
+        INSERT INTO items (name, description, category, quantity, minQuantity, price, status, isActive, unit)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+      `, [name, description, category, quantity || 0, minQuantity || 0, price || 0, status, unit || 'pcs']);
+    } else {
+      console.log('⚠️  Unit column does not exist, inserting without unit');
+      [result] = await pool.query(`
+        INSERT INTO items (name, description, category, quantity, minQuantity, price, status, isActive)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+      `, [name, description, category, quantity || 0, minQuantity || 0, price || 0, status]);
+    }
 
     if (result.insertId) {
       // Fetch the created item
@@ -344,17 +357,24 @@ app.put("/api/items/:id", async (req, res) => {
       });
     }
 
+    // Check which columns exist in the table
+    const [columns] = await pool.query('DESCRIBE items');
+    const existingColumns = columns.map(col => col.Field);
+    console.log('Existing columns:', existingColumns);
+
     // Build the update query dynamically
     const updateFields = [];
     const updateValues = [];
 
-    // Only update fields that are provided
+    // Only update fields that are provided AND exist in the table
     const allowedFields = ['name', 'description', 'category', 'quantity', 'minQuantity', 'price', 'lastRestocked', 'unit'];
 
     Object.entries(updates).forEach(([key, value]) => {
-      if (allowedFields.includes(key) && value !== undefined) {
+      if (allowedFields.includes(key) && value !== undefined && existingColumns.includes(key)) {
         updateFields.push(`${key} = ?`);
         updateValues.push(value);
+      } else if (allowedFields.includes(key) && value !== undefined && !existingColumns.includes(key)) {
+        console.log(`⚠️  Skipping field '${key}' - column does not exist in database`);
       }
     });
 
