@@ -159,9 +159,10 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md my-8 max-h-[90vh] flex flex-col">
+        {/* Header - Fixed */}
+        <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900">Request Item</h2>
           <button
             onClick={onClose}
@@ -171,102 +172,110 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
           </button>
         </div>
 
-        <div className="mb-4 p-3 bg-gray-50 rounded-md">
-          <h3 className="font-medium text-gray-900">{item.name}</h3>
-          <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-          <div className="mt-2 flex justify-between text-sm">
-            <span className="text-gray-500">Available:</span>
-            <span className="font-medium text-gray-900">
-              {item.quantity} units
-            </span>
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1 px-6">
+          <div className="my-4 p-3 bg-gray-50 rounded-md">
+            <h3 className="font-medium text-gray-900">{item.name}</h3>
+            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+            <div className="mt-2 flex justify-between text-sm">
+              <span className="text-gray-500">Available:</span>
+              <span className="font-medium text-gray-900">
+                {item.quantity} units
+              </span>
+            </div>
           </div>
-        </div>
 
-        {error && (
-          <Alert
-            variant="error"
-            title="Error"
-            onDismiss={() => setError(null)}
-            className="mb-4"
-          >
-            {error}
-          </Alert>
-        )}
+          {error && (
+            <Alert
+              variant="error"
+              title="Error"
+              onDismiss={() => setError(null)}
+              className="mb-4"
+            >
+              {error}
+            </Alert>
+          )}
 
-        {success && (
-          <Alert variant="success" title="Success" className="mb-4">
-            Your request has been submitted successfully. Redirecting to your requests page...
-          </Alert>
-        )}
+          {success && (
+            <Alert variant="success" title="Success" className="mb-4">
+              Your request has been submitted successfully. Redirecting to your requests page...
+            </Alert>
+          )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <Input
-              label="Quantity"
-              type="number"
-              min="1"
-              max={item.quantity}
-              value={quantityInput}
-              onChange={(e) => {
-                const inputValue = e.target.value;
-                setQuantityInput(inputValue);
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Quantity"
+                type="number"
+                min="1"
+                max={item.quantity}
+                value={quantityInput}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  setQuantityInput(inputValue);
 
-                // Parse the value, allowing empty string during editing
-                const parsedValue = inputValue === "" ? 0 : parseInt(inputValue);
-                if (!isNaN(parsedValue)) {
-                  setQuantity(parsedValue);
-                }
-              }}
-              onBlur={(e) => {
-                // On blur, ensure we have a valid value
-                const inputValue = e.target.value;
-                if (inputValue === "" || parseInt(inputValue) < 1) {
-                  setQuantityInput("1");
-                  setQuantity(1);
-                }
-              }}
-              required
-            />
+                  // Parse the value, allowing empty string during editing
+                  const parsedValue = inputValue === "" ? 0 : parseInt(inputValue);
+                  if (!isNaN(parsedValue)) {
+                    setQuantity(parsedValue);
+                  }
+                }}
+                onBlur={(e) => {
+                  // On blur, ensure we have a valid value
+                  const inputValue = e.target.value;
+                  if (inputValue === "" || parseInt(inputValue) < 1) {
+                    setQuantityInput("1");
+                    setQuantity(1);
+                  }
+                }}
+                required
+              />
+
+              <Select
+                label="Unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                options={unitOptions}
+                required
+              />
+            </div>
 
             <Select
-              label="Unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              options={unitOptions}
+              label="Priority"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as RequestPriority)}
+              options={priorityOptions}
               required
             />
-          </div>
 
-          <Select
-            label="Priority"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as RequestPriority)}
-            options={priorityOptions}
-            required
-          />
+            <Textarea
+              label="Reason for Request"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Please explain why you need this item"
+              required
+            />
 
-          <Textarea
-            label="Reason for Request"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Please explain why you need this item"
-            required
-          />
+            <Input
+              label="Requested Delivery Date"
+              type="date"
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+            />
+          </form>
+        </div>
 
-          <Input
-            label="Requested Delivery Date"
-            type="date"
-            value={deliveryDate}
-            onChange={(e) => setDeliveryDate(e.target.value)}
-            min={new Date().toISOString().split("T")[0]}
-          />
-
-          <div className="mt-6 flex justify-end space-x-3">
+        {/* Footer - Fixed */}
+        <div className="border-t border-gray-200 p-6 pt-4 flex-shrink-0 bg-white">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
             <Button
               variant="outline"
               onClick={onClose}
               type="button"
               disabled={loading}
+              fullWidth={true}
+              className="sm:w-auto"
             >
               Cancel
             </Button>
@@ -275,11 +284,14 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
               type="submit"
               isLoading={loading}
               icon={<Send className="h-4 w-4" />}
+              onClick={handleSubmit}
+              fullWidth={true}
+              className="sm:w-auto"
             >
               Submit Request
             </Button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
