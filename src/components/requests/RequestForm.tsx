@@ -138,40 +138,41 @@ const RequestForm: React.FC<RequestFormProps> = ({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center">
-          <PlusCircle className="h-6 w-6 text-blue-600 mr-2" />
-          <h2 className="text-xl font-semibold text-gray-900">
-            {selectedItem ? `Request ${selectedItem.name}` : "New Item Request"}
-          </h2>
-        </div>
-        <p className="text-sm text-gray-600 mt-1">
-          {selectedItem ? (
-            <span>
-              You are requesting <strong>{selectedItem.name}</strong>. Fill out
-              the details below.
-            </span>
-          ) : (
-            "Fill out the form below to request new items"
-          )}
-        </p>
-        {selectedItem && (
-          <div className="mt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              to="/browse"
-              as={Link}
-              icon={<ArrowLeft className="h-4 w-4" />}
-            >
-              Back to Browse
-            </Button>
+    <div className="pb-20 sm:pb-0">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center">
+            <PlusCircle className="h-6 w-6 text-blue-600 mr-2" />
+            <h2 className="text-xl font-semibold text-gray-900">
+              {selectedItem ? `Request ${selectedItem.name}` : "New Item Request"}
+            </h2>
           </div>
-        )}
-      </CardHeader>
+          <p className="text-sm text-gray-600 mt-1">
+            {selectedItem ? (
+              <span>
+                You are requesting <strong>{selectedItem.name}</strong>. Fill out
+                the details below.
+              </span>
+            ) : (
+              "Fill out the form below to request new items"
+            )}
+          </p>
+          {selectedItem && (
+            <div className="mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                to="/browse"
+                as={Link}
+                icon={<ArrowLeft className="h-4 w-4" />}
+              >
+                Back to Browse
+              </Button>
+            </div>
+          )}
+        </CardHeader>
 
-      <CardContent>
+        <CardContent>
         {error && (
           <Alert
             variant="error"
@@ -274,8 +275,13 @@ const RequestForm: React.FC<RequestFormProps> = ({
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end">
-            <Button type="button" variant="outline" className="mr-3">
+          {/* Desktop: Normal flow buttons */}
+          <div className="mt-6 hidden sm:flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate(-1)}
+            >
               Cancel
             </Button>
             <Button
@@ -290,6 +296,32 @@ const RequestForm: React.FC<RequestFormProps> = ({
         </form>
       </CardContent>
     </Card>
+
+    {/* Mobile: Fixed bottom buttons */}
+    <div className="fixed bottom-0 left-0 right-0 sm:hidden bg-white/95 backdrop-blur-lg border-t border-gray-200 p-4 shadow-lg z-50">
+      <div className="flex gap-3 max-w-7xl mx-auto">
+        <Button
+          type="button"
+          variant="outline"
+          fullWidth={true}
+          onClick={() => navigate(-1)}
+          disabled={loading}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="primary"
+          isLoading={loading}
+          icon={<Send className="h-4 w-4" />}
+          fullWidth={true}
+          onClick={handleSubmit}
+        >
+          Submit Request
+        </Button>
+      </div>
+    </div>
+  </div>
   );
 };
 
