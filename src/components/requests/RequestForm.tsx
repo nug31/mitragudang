@@ -70,6 +70,11 @@ const RequestForm: React.FC<RequestFormProps> = ({
                       itemName.toLowerCase().includes("paper") ||
                       itemName.toLowerCase().includes("hvs");
 
+  // Check if all required fields are filled
+  const isFormValid = itemName.trim() !== "" &&
+                      quantity > 0 &&
+                      deliveryDate !== "";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -288,6 +293,7 @@ const RequestForm: React.FC<RequestFormProps> = ({
               type="submit"
               variant="primary"
               isLoading={loading}
+              disabled={!isFormValid || loading}
               icon={<Send className="h-4 w-4" />}
             >
               Submit Request
@@ -313,6 +319,7 @@ const RequestForm: React.FC<RequestFormProps> = ({
           type="submit"
           variant="primary"
           isLoading={loading}
+          disabled={!isFormValid || loading}
           icon={<Send className="h-4 w-4" />}
           fullWidth={true}
           onClick={handleSubmit}

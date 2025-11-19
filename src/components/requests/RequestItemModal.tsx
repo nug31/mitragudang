@@ -48,6 +48,11 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
     { value: "pack", label: "Pack" },
   ];
 
+  // Check if all required fields are filled
+  const isFormValid = quantity > 0 &&
+                      description.trim() !== "" &&
+                      deliveryDate !== "";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -262,6 +267,7 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
               value={deliveryDate}
               onChange={(e) => setDeliveryDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
+              required
             />
           </form>
         </div>
@@ -283,6 +289,7 @@ const RequestItemModal: React.FC<RequestItemModalProps> = ({
               variant="primary"
               type="submit"
               isLoading={loading}
+              disabled={!isFormValid || loading}
               icon={<Send className="h-4 w-4" />}
               onClick={handleSubmit}
               fullWidth={true}
