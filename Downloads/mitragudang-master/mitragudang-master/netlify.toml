@@ -1,4 +1,5 @@
 [build]
+  base = "Downloads/mitragudang-master/mitragudang-master"
   command = "npm install && npm run build"
   publish = "dist"
   
