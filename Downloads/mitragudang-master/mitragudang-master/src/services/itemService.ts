@@ -139,6 +139,50 @@ class ItemService {
     }
   }
 
+  // Bulk Create Items
+  async bulkCreateItems(items: Omit<Item, "id" | "status">[]): Promise<{ success: boolean, count: number, message?: string } | null> {
+    try {
+      const response = await fetch(`${API_URL}/items/bulk`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(items),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating items in bulk:", error);
+      return null;
+    }
+  }
+
+  // Bulk Update Stock
+  async bulkUpdateStock(updates: { id?: string; name?: string; quantity: number }[]): Promise<{ success: boolean, updatedCount: number, errorCount: number, results: any[], errors: any[] } | null> {
+    try {
+      const response = await fetch(`${API_URL}/items/bulk-update-stock`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating stock in bulk:", error);
+      return null;
+    }
+  }
+
   // Update an existing item
   async updateItem(id: string, updates: Partial<Item>): Promise<Item | null> {
     try {

@@ -228,8 +228,8 @@ app.get("/api/items", async (req, res) => {
           item.quantity <= 0
             ? "out-of-stock"
             : item.quantity <= item.minQuantity
-            ? "low-stock"
-            : "in-stock";
+              ? "low-stock"
+              : "in-stock";
       } else {
         formattedItem.status = "in-stock";
       }
@@ -295,8 +295,8 @@ app.get("/api/items/:id", async (req, res) => {
         (item.quantity <= 0
           ? "out-of-stock"
           : item.quantity <= item.minQuantity
-          ? "low-stock"
-          : "in-stock"),
+            ? "low-stock"
+            : "in-stock"),
       price: item.price,
     };
 
@@ -364,8 +364,8 @@ app.post("/api/items", async (req, res) => {
           (item.quantity <= 0
             ? "out-of-stock"
             : item.quantity <= item.minQuantity
-            ? "low-stock"
-            : "in-stock"),
+              ? "low-stock"
+              : "in-stock"),
         price: item.price,
       };
 
@@ -382,6 +382,182 @@ app.post("/api/items", async (req, res) => {
       message: "Error creating item",
       error: error.message,
     });
+  }
+});
+
+// Bulk Create Items (Import Stok Awal)
+app.post("/api/items/bulk", async (req, res) => {
+  let connection;
+  try {
+    const items = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "Invalid or empty items array" });
+    }
+
+    console.log(`Processing bulk create for ${items.length} items`);
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    // Check columns
+    const [columns] = await connection.query("DESCRIBE items");
+    const hasStatusColumn = columns.some((col) => col.Field === "status");
+    const hasIsActiveColumn = columns.some((col) => col.Field === "isActive");
+
+    const results = [];
+
+    for (const item of items) {
+      const { name, description, category, quantity, minQuantity } = item;
+
+      // Calculate status
+      let status = "out-of-stock";
+      if (quantity > 0) {
+        status = quantity <= minQuantity ? "low-stock" : "in-stock";
+      }
+
+      let query = "INSERT INTO items (name, description, category, quantity, minQuantity";
+      let placeholders = "?, ?, ?, ?, ?";
+      let params = [name, description, category, quantity, minQuantity];
+
+      if (hasStatusColumn) {
+        query += ", status";
+        placeholders += ", ?";
+        params.push(status);
+      }
+
+      if (hasIsActiveColumn) {
+        query += ", isActive";
+        placeholders += ", ?";
+        params.push(1);
+      }
+
+      query += `) VALUES (${placeholders})`;
+
+      const [result] = await connection.query(query, params);
+      results.push({ ...item, id: result.insertId, status });
+    }
+
+    await connection.commit();
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully created ${results.length} items`,
+      count: results.length,
+      items: results
+    });
+
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error("Error in bulk create:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating items in bulk",
+      error: error.message,
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
+// Bulk Update Stock (Import Stok Akhir)
+app.post("/api/items/bulk-update-stock", async (req, res) => {
+  let connection;
+  try {
+    const updates = req.body; // Array of { id, quantity } or { name, quantity }
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ success: false, message: "Invalid or empty updates array" });
+    }
+
+    console.log(`Processing bulk stock update for ${updates.length} items`);
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [columns] = await connection.query("DESCRIBE items");
+    const hasStatusColumn = columns.some((col) => col.Field === "status");
+
+    const results = [];
+    const errors = [];
+
+    for (const update of updates) {
+      try {
+        let items = [];
+
+        // Find item by ID or Name
+        if (update.id) {
+          [items] = await connection.query("SELECT * FROM items WHERE id = ?", [update.id]);
+        } else if (update.name) {
+          [items] = await connection.query("SELECT * FROM items WHERE name = ?", [update.name]);
+        }
+
+        if (items.length === 0) {
+          errors.push({ item: update, error: "Item not found" });
+          continue;
+        }
+
+        const item = items[0];
+        const newQuantity = Number(update.quantity);
+        const minQuantity = item.minQuantity;
+
+        if (isNaN(newQuantity)) {
+          errors.push({ item: update, error: "Invalid quantity" });
+          continue;
+        }
+
+        // Calculate new status
+        let newStatus = "out-of-stock";
+        if (newQuantity > 0) {
+          newStatus = newQuantity <= minQuantity ? "low-stock" : "in-stock";
+        }
+
+        let query = "UPDATE items SET quantity = ?";
+        let params = [newQuantity];
+
+        if (hasStatusColumn) {
+          query += ", status = ?";
+          params.push(newStatus);
+        }
+
+        query += " WHERE id = ?";
+        params.push(item.id);
+
+        await connection.query(query, params);
+
+        results.push({
+          id: item.id,
+          name: item.name,
+          oldQuantity: item.quantity,
+          newQuantity: newQuantity,
+          status: newStatus
+        });
+
+      } catch (err) {
+        console.error(`Error updating item ${update.id || update.name}:`, err);
+        errors.push({ item: update, error: err.message });
+      }
+    }
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      message: `Updated ${results.length} items`,
+      updatedCount: results.length,
+      errorCount: errors.length,
+      results,
+      errors
+    });
+
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error("Error in bulk stock update:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating stock in bulk",
+      error: error.message,
+    });
+  } finally {
+    if (connection) connection.release();
   }
 });
 
@@ -463,8 +639,8 @@ app.put("/api/items/:id", async (req, res) => {
           (item.quantity <= 0
             ? "out-of-stock"
             : item.quantity <= item.minQuantity
-            ? "low-stock"
-            : "in-stock"),
+              ? "low-stock"
+              : "in-stock"),
         price: item.price,
       };
 
@@ -849,8 +1025,7 @@ app.post("/api/requests", async (req, res) => {
     for (const item of items) {
       try {
         console.log(
-          `Inserting request item: request_id=${requestId}, item_id=${
-            item.item_id
+          `Inserting request item: request_id=${requestId}, item_id=${item.item_id
           }, quantity=${item.quantity || 1}`
         );
 
@@ -1644,9 +1819,9 @@ app.get("/api/debug/fix-requester-names", async (req, res) => {
           [
             request.username,
             request.email ||
-              `${request.username
-                .toLowerCase()
-                .replace(/\s+/g, ".")}@example.com`,
+            `${request.username
+              .toLowerCase()
+              .replace(/\s+/g, ".")}@example.com`,
             request.requester_id,
           ]
         );
@@ -1767,13 +1942,12 @@ app.get("/api/dashboard/stats", async (req, res) => {
       recentActivity: recentActivity.map(activity => ({
         id: activity.id,
         type: activity.status === 'pending' ? 'request_created' :
-              activity.status === 'approved' ? 'request_approved' :
-              activity.status === 'denied' ? 'request_denied' : 'request_updated',
-        description: `${activity.user_name || 'User'} ${
-          activity.status === 'pending' ? 'created' :
-          activity.status === 'approved' ? 'approved' :
-          activity.status === 'denied' ? 'denied' : 'updated'
-        } request: ${activity.project_name}`,
+          activity.status === 'approved' ? 'request_approved' :
+            activity.status === 'denied' ? 'request_denied' : 'request_updated',
+        description: `${activity.user_name || 'User'} ${activity.status === 'pending' ? 'created' :
+            activity.status === 'approved' ? 'approved' :
+              activity.status === 'denied' ? 'denied' : 'updated'
+          } request: ${activity.project_name}`,
         timestamp: activity.created_at || activity.updated_at,
         user: activity.user_name
       }))
@@ -1920,13 +2094,12 @@ app.get("/api/dashboard/activity", async (req, res) => {
     res.json(recentActivity.map(activity => ({
       id: activity.id,
       type: activity.status === 'pending' ? 'request_created' :
-            activity.status === 'approved' ? 'request_approved' :
-            activity.status === 'denied' ? 'request_denied' : 'request_updated',
-      description: `${activity.user_name || 'User'} ${
-        activity.status === 'pending' ? 'created' :
-        activity.status === 'approved' ? 'approved' :
-        activity.status === 'denied' ? 'denied' : 'updated'
-      } request: ${activity.project_name}`,
+        activity.status === 'approved' ? 'request_approved' :
+          activity.status === 'denied' ? 'request_denied' : 'request_updated',
+      description: `${activity.user_name || 'User'} ${activity.status === 'pending' ? 'created' :
+          activity.status === 'approved' ? 'approved' :
+            activity.status === 'denied' ? 'denied' : 'updated'
+        } request: ${activity.project_name}`,
       timestamp: activity.created_at || activity.updated_at,
       user: activity.user_name
     })));
@@ -2525,7 +2698,7 @@ app.get("/api/chat/items-context", async (req, res) => {
       quantity: item.quantity,
       minQuantity: item.minQuantity,
       status: item.status || (item.quantity <= 0 ? "out-of-stock" :
-              item.quantity <= item.minQuantity ? "low-stock" : "in-stock"),
+        item.quantity <= item.minQuantity ? "low-stock" : "in-stock"),
       price: item.price
     }));
 

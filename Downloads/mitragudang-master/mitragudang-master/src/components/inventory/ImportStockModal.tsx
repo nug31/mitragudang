@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import Button from "../ui/Button";
 import Alert from "../ui/Alert";
-import { X, Upload, FileSpreadsheet, Check, AlertCircle, Download } from "lucide-react";
+import { X, Upload, FileSpreadsheet, Check } from "lucide-react";
 import * as XLSX from "xlsx";
-import { Item } from "../../types";
 import { itemService } from "../../services/itemService";
 
 interface ImportStockModalProps {
   onClose: () => void;
-  items: Item[];
   onImported: (log: Array<any>) => void; // import log entries
 }
 
-const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onImported }) => {
+const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, onImported }) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<any[]>([]);
@@ -31,7 +29,7 @@ const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onI
         setError("Empty file");
         return;
       }
-      setPreview(json.slice(0,5) as any[]);
+      setPreview(json.slice(0, 5) as any[]);
     } catch (e) {
       console.error(e);
       setError("Failed to parse file");
@@ -50,18 +48,6 @@ const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onI
     }
   };
 
-  const findItem = (row: any) => {
-    const id = row.id ? String(row.id) : null;
-    const name = row.name ? String(row.name).toLowerCase().trim() : null;
-    if (id) {
-      return items.find((it) => it.id === id) || null;
-    }
-    if (name) {
-      return items.find((it) => it.name.toLowerCase().trim() === name) || null;
-    }
-    return null;
-  };
-
   const handleImport = async () => {
     if (!file) return;
     setProcessing(true);
@@ -71,6 +57,7 @@ const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onI
       const ws = wb.Sheets[wb.SheetNames[0]];
       const json: any[] = XLSX.utils.sheet_to_json(ws);
 
+      const updates: any[] = [];
       const log: any[] = [];
 
       for (const row of json) {
@@ -80,32 +67,56 @@ const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onI
           // skip rows without final quantity
           continue;
         }
-        const item = findItem(row);
-        if (!item) {
-          log.push({ id: row.id || '', name: row.name || '', initial: '', final: finalQ, status: 'not found' });
-          continue;
-        }
-        const initial = item.quantity;
-        const final = Number(finalQ);
-        const delta = final - initial;
 
-        // update item on server
-        try {
-          const updated = await itemService.updateItem(item.id, { quantity: final });
-          if (updated) {
-            log.push({ id: item.id, name: item.name, initial, final, delta, status: 'updated' });
-          } else {
-            log.push({ id: item.id, name: item.name, initial, final, delta, status: 'failed' });
-          }
-        } catch (e) {
-          console.error(e);
-          log.push({ id: item.id, name: item.name, initial, final, delta, status: 'error' });
+        const quantity = Number(finalQ);
+        if (isNaN(quantity)) continue;
+
+        // Prepare update object
+        if (row.id) {
+          updates.push({ id: String(row.id), quantity });
+        } else if (row.name) {
+          updates.push({ name: String(row.name).trim(), quantity });
         }
       }
 
-      setSuccess(true);
-      onImported(log);
-      setTimeout(() => { onClose(); }, 1200);
+      if (updates.length > 0) {
+        const result = await itemService.bulkUpdateStock(updates);
+
+        if (result && result.success) {
+          setSuccess(true);
+          // Add successful updates to log
+          result.results.forEach((r: any) => {
+            log.push({
+              id: r.id,
+              name: r.name,
+              initial: r.oldQuantity,
+              final: r.newQuantity,
+              delta: r.newQuantity - r.oldQuantity,
+              status: 'updated'
+            });
+          });
+
+          // Add failed updates to log
+          result.errors.forEach((e: any) => {
+            log.push({
+              id: e.item.id || '',
+              name: e.item.name || '',
+              initial: '',
+              final: e.item.quantity,
+              status: `error: ${e.error}`
+            });
+          });
+
+          onImported(log);
+          setTimeout(() => { onClose(); }, 1200);
+
+        } else {
+          setError('Import failed');
+        }
+      } else {
+        setError('No valid data found to import');
+      }
+
     } catch (e) {
       console.error(e);
       setError('Import failed');
@@ -123,7 +134,7 @@ const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onI
               <FileSpreadsheet className="h-6 w-6 text-blue-600 mr-2" />
               Import Stock Changes (Excel/CSV)
             </h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 focus:outline-none"><X className="h-5 w-5"/></button>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 focus:outline-none"><X className="h-5 w-5" /></button>
           </div>
 
           {success ? (
@@ -155,7 +166,7 @@ const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onI
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50"><tr>{Object.keys(preview[0]).map(k => <th key={k} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{k}</th>)}</tr></thead>
-                      <tbody className="bg-white divide-y divide-gray-200">{preview.map((r,idx)=>(<tr key={idx}>{Object.values(r).map((v,i)=>(<td key={i} className="px-3 py-2 text-sm text-gray-500">{String(v)}</td>))}</tr>))}</tbody>
+                      <tbody className="bg-white divide-y divide-gray-200">{preview.map((r, idx) => (<tr key={idx}>{Object.values(r).map((v, i) => (<td key={i} className="px-3 py-2 text-sm text-gray-500">{String(v)}</td>))}</tr>))}</tbody>
                     </table>
                   </div>
                 </div>
@@ -163,7 +174,7 @@ const ImportStockModal: React.FC<ImportStockModalProps> = ({ onClose, items, onI
 
               <div className="flex justify-end space-x-3">
                 <Button variant="outline" onClick={onClose}>Cancel</Button>
-                <Button variant="primary" onClick={handleImport} loading={processing} disabled={!file}>Import Stock</Button>
+                <Button variant="primary" onClick={handleImport} isLoading={processing} disabled={!file}>Import Stock</Button>
               </div>
             </>
           )}

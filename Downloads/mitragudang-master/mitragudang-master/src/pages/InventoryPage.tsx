@@ -143,28 +143,16 @@ const InventoryPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Create items one by one
-      const createdItems: Item[] = [];
+      const result = await itemService.bulkCreateItems(newItems);
 
-      for (const item of newItems) {
-        try {
-          const createdItem = await itemService.createItem(item);
-          if (createdItem) {
-            createdItems.push(createdItem);
-          }
-        } catch (itemErr) {
-          console.error("Error importing individual item:", itemErr);
-          // Continue with other items even if one fails
-        }
-      }
-
-      if (createdItems.length > 0) {
-        setItems((prev) => [...prev, ...createdItems]);
+      if (result && result.success) {
+        // Refresh items to get the new ones with IDs and statuses
+        await fetchItems();
         console.log(
-          `Successfully imported ${createdItems.length} out of ${newItems.length} items`
+          `Successfully imported ${result.count} items`
         );
       } else {
-        setError("Failed to import any items");
+        setError(result?.message || "Failed to import items");
       }
     } catch (err) {
       console.error("Error importing items:", err);
@@ -280,8 +268,8 @@ const InventoryPage: React.FC = () => {
               className="flex-shrink-0"
               size="sm"
             >
-              <span className="hidden sm:inline">Import Excel</span>
-              <span className="sm:hidden">Import</span>
+              <span className="hidden sm:inline">Import Stok Awal (Add Items)</span>
+              <span className="sm:hidden">Import Awal</span>
             </Button>
             <Button
               variant="outline"
@@ -301,8 +289,8 @@ const InventoryPage: React.FC = () => {
               className="flex-shrink-0"
               size="sm"
             >
-              <span className="hidden sm:inline">Export Snapshot</span>
-              <span className="sm:hidden">Export</span>
+              <span className="hidden sm:inline">Export Stok Awal/Akhir</span>
+              <span className="sm:hidden">Export Stok</span>
             </Button>
             <Button
               variant="secondary"
@@ -311,8 +299,8 @@ const InventoryPage: React.FC = () => {
               className="flex-shrink-0"
               size="sm"
             >
-              <span className="hidden sm:inline">Import Stock Changes</span>
-              <span className="sm:hidden">Import Stock</span>
+              <span className="hidden sm:inline">Import Stok Akhir (Update Stock)</span>
+              <span className="sm:hidden">Import Akhir</span>
             </Button>
             <Button
               variant="secondary"
@@ -409,19 +397,18 @@ const InventoryPage: React.FC = () => {
         />
       )}
 
-        {showImportStockModal && (
-          <ImportStockModal
-            onClose={() => setShowImportStockModal(false)}
-            items={items}
-            onImported={(log) => {
-              // After import, update local list with any updated items from server
-              // For simplicity re-fetch items to keep sync
-              fetchItems();
-              // Optionally, generate/export log or show toast
-              console.log("Stock import log:", log);
-            }}
-          />
-        )}
+      {showImportStockModal && (
+        <ImportStockModal
+          onClose={() => setShowImportStockModal(false)}
+          onImported={(log) => {
+            // After import, update local list with any updated items from server
+            // For simplicity re-fetch items to keep sync
+            fetchItems();
+            // Optionally, generate/export log or show toast
+            console.log("Stock import log:", log);
+          }}
+        />
+      )}
 
       {editingItem && (
         <EditItemModal
