@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
-const OpenAI = require("openai");
 const { dbConfig, serverConfig } = require('./config');
 
 console.log('🚀 Starting server with full functionality...');
@@ -2750,7 +2749,7 @@ module.exports = app;
 if (require.main === module) {
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log(`🤖 OpenAI API Key: ${process.env.OPENAI_API_KEY ? 'Configured' : 'Not configured'}`);
+
   });
 
   // Handle server errors
