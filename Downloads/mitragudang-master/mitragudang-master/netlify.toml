@@ -2,7 +2,7 @@
 # This config should override any UI settings
 [build]
   # No base directory - package.json is at repository root
-  base = ""
+  base = "."
   command = "npm install && npm run build"
   publish = "dist"
   
