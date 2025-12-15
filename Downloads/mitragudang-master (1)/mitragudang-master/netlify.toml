@@ -1,5 +1,5 @@
 # Fix Netlify Base Directory
-# Fix Netlify Config
+# Fix Netlify Config (Clean Deploy Branch)
 [build]
   command = "npm ci && npm run build"
   publish = "dist"
