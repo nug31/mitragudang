@@ -57,47 +57,6 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 {/* Modern subtle divider/info (optional) */}
                 <div className="hidden lg:block w-16 h-1 bg-blue-600/30 rounded-full"></div>
 
-                {/* Branding Section (Desktop hidden on mobile, replaced by bottom section) */}
-                <div className="hidden lg:flex flex-col space-y-4 stagger-4 pt-4">
-                    <p className="text-sm text-gray-400 font-medium tracking-wide uppercase">Developed By</p>
-                    <div className="flex flex-wrap gap-4">
-                        <a
-                            href="https://jsnportofolio.netlify.app/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
-                        >
-                            <div className="w-8 h-8 rounded-lg bg-blue-600/20 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                                <Globe className="w-4 h-4 text-blue-400 group-hover:text-white" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">My Portfolio</p>
-                                <p className="text-sm text-white font-medium">jsnportofolio.netlify.app</p>
-                            </div>
-                        </a>
-
-                        <div className="flex items-center space-x-2">
-                            <a
-                                href="https://instagram.com/j.s_nugroho"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-pink-600/20 hover:border-pink-600/50 transition-all group"
-                                title="Instagram"
-                            >
-                                <Instagram className="w-5 h-5 text-gray-400 group-hover:text-pink-500" />
-                            </a>
-                            <a
-                                href="https://github.com/jsnugroho"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/20 hover:border-white/50 transition-all group"
-                                title="GitHub"
-                            >
-                                <Github className="w-5 h-5 text-gray-400 group-hover:text-white" />
-                            </a>
-                        </div>
-                    </div>
-                </div>
 
                 {/* Login/Register Form Content */}
                 <div className="w-full px-2">
