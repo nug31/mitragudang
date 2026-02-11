@@ -82,6 +82,61 @@ export const downloadInventoryTemplate = (): void => {
 };
 
 /**
+ * Generates an Excel template file for bulk stock operations (In/Out)
+ * @param type 'in' or 'out'
+ * @returns Blob of the Excel file
+ */
+export const generateStockTemplate = (type: 'in' | 'out'): Blob => {
+  const wb = XLSX.utils.book_new();
+
+  // Header row and sample data
+  const data = [
+    {
+      itemId: 1,
+      name: "Sample Item (For Reference Only)",
+      quantity: 10,
+      notes: "Initial stock"
+    }
+  ];
+
+  const ws = XLSX.utils.json_to_sheet(data);
+
+  // Add column widths
+  ws["!cols"] = [
+    { wch: 10 }, // itemId
+    { wch: 30 }, // name
+    { wch: 10 }, // quantity
+    { wch: 30 }, // notes
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, `Stock ${type.toUpperCase()} Template`);
+
+  const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([excelBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+};
+
+/**
+ * Triggers a download of the stock template Excel file
+ * @param type 'in' or 'out'
+ */
+export const downloadStockTemplate = (type: 'in' | 'out'): void => {
+  const blob = generateStockTemplate(type);
+  const url = URL.createObjectURL(blob);
+  const filename = type === 'in' ? 'barang_masuk_template.xlsx' : 'barang_keluar_template.xlsx';
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+/**
  * Exports requests data to Excel file
  * @param requests Array of ItemRequest objects
  * @param filename Optional filename for the export

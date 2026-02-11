@@ -12,8 +12,8 @@ import {
   FileSpreadsheet,
   ListFilter,
   Search,
-  TrendingUp,
-  TrendingDown,
+  ArrowUpCircle,
+  ArrowDownCircle,
 } from "lucide-react";
 import InventoryList from "../components/inventory/InventoryList";
 import AddItemModal from "../components/inventory/AddItemModal";
@@ -21,6 +21,7 @@ import EditItemModal from "../components/inventory/EditItemModal";
 import ImportItemsModal from "../components/inventory/ImportItemsModal";
 import CategoryManagement from "../components/inventory/CategoryManagement";
 import BrowseItemsModal from "../components/inventory/BrowseItemsModal";
+import ImportStockModal from "../components/inventory/ImportStockModal";
 import Select from "../components/ui/Select";
 import Input from "../components/ui/Input";
 import { itemService } from "../services/itemService";
@@ -36,6 +37,8 @@ const InventoryPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showBrowseModal, setShowBrowseModal] = useState(false);
+  const [showImportStockModal, setShowImportStockModal] = useState(false);
+  const [importStockType, setImportStockType] = useState<"in" | "out">("in");
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -246,79 +249,88 @@ const InventoryPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center">
-            <Logo size={24} className="mr-3" />
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-                Inventory Management
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Manage and track your inventory items
-              </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Logo size={24} className="mr-3" />
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                  Inventory Management
+                </h1>
+                <p className="mt-1 text-sm text-gray-600">
+                  Manage and track your inventory items
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 lg:gap-3 flex-1">
-            <Button
-              variant="outline"
-              onClick={() => { }} // Placeholder
-              icon={<TrendingUp className="h-4 w-4" />}
-              className="flex-shrink-0 border-green-600 text-green-600 hover:bg-green-50"
-              size="sm"
-            >
-              <span className="hidden sm:inline">Barang Masuk (Excel)</span>
-              <span className="sm:hidden">Masuk</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => { }} // Placeholder
-              icon={<TrendingDown className="h-4 w-4" />}
-              className="flex-shrink-0 border-red-600 text-red-600 hover:bg-red-50"
-              size="sm"
-            >
-              <span className="hidden sm:inline">Barang Keluar (Excel)</span>
-              <span className="sm:hidden">Keluar</span>
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setShowBrowseModal(true)}
-              icon={<Search className="h-4 w-4" />}
-              className="flex-shrink-0"
-              size="sm"
-            >
-              <span className="hidden sm:inline">Browse Items</span>
-              <span className="sm:hidden">Browse</span>
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setShowImportModal(true)}
-              icon={<FileSpreadsheet className="h-4 w-4" />}
-              className="flex-shrink-0"
-              size="sm"
-            >
-              <span className="hidden sm:inline">Import Excel</span>
-              <span className="sm:hidden">Import</span>
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setShowCategoryModal(true)}
-              icon={<ListFilter className="h-4 w-4" />}
-              className="flex-shrink-0"
-              size="sm"
-            >
-              Categories
-            </Button>
-            <div className="w-full lg:w-auto mt-2 lg:mt-0">
+
+            <div className="flex flex-wrap items-center justify-end gap-2 lg:gap-3">
               <Button
-                variant="primary"
-                onClick={() => setShowAddModal(true)}
-                icon={<Plus className="h-4 w-4" />}
-                className="w-full lg:w-auto"
+                variant="outline"
+                onClick={() => {
+                  setImportStockType("in");
+                  setShowImportStockModal(true);
+                }}
+                icon={<ArrowUpCircle className="h-4 w-4" />}
+                className="flex-shrink-0 border-green-600 text-green-600 hover:bg-green-50"
+                size="sm"
               >
-                <span className="hidden sm:inline">Add New Item</span>
-                <span className="sm:hidden">Add Item</span>
+                <span className="hidden sm:inline">Barang Masuk (Excel)</span>
+                <span className="sm:hidden">Masuk</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setImportStockType("out");
+                  setShowImportStockModal(true);
+                }}
+                icon={<ArrowDownCircle className="h-4 w-4" />}
+                className="flex-shrink-0 border-red-600 text-red-600 hover:bg-red-50"
+                size="sm"
+              >
+                <span className="hidden sm:inline">Barang Keluar (Excel)</span>
+                <span className="sm:hidden">Keluar</span>
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowBrowseModal(true)}
+                icon={<Search className="h-4 w-4" />}
+                className="flex-shrink-0"
+                size="sm"
+              >
+                <span className="hidden sm:inline">Browse Items</span>
+                <span className="sm:hidden">Browse</span>
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowImportModal(true)}
+                icon={<FileSpreadsheet className="h-4 w-4" />}
+                className="flex-shrink-0"
+                size="sm"
+              >
+                <span className="hidden sm:inline">Import Excel</span>
+                <span className="sm:hidden">Import</span>
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowCategoryModal(true)}
+                icon={<ListFilter className="h-4 w-4" />}
+                className="flex-shrink-0"
+                size="sm"
+              >
+                Categories
               </Button>
             </div>
+          </div>
+
+          <div className="flex items-center">
+            <Button
+              variant="primary"
+              onClick={() => setShowAddModal(true)}
+              icon={<Plus className="h-4 w-4" />}
+            >
+              <span className="hidden sm:inline">Add New Item</span>
+              <span className="sm:hidden">Add Item</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -442,6 +454,16 @@ const InventoryPage: React.FC = () => {
               setEditingItem(item);
               setShowBrowseModal(false);
             }}
+          />
+        )
+      }
+
+      {
+        showImportStockModal && (
+          <ImportStockModal
+            type={importStockType}
+            onClose={() => setShowImportStockModal(false)}
+            onSuccess={fetchItems}
           />
         )
       }
