@@ -98,48 +98,47 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Login/Register Form Content */}
-            <div className="w-full px-2">
-                {children}
-            </div>
+                {/* Login/Register Form Content */}
+                <div className="w-full px-2">
+                    {children}
+                </div>
 
-            {/* Centered Desktop Branding/Contact */}
-            <div className="flex flex-col items-center space-y-4 pt-8 animate-fade-in-up stagger-5 border-t border-white/5 w-full">
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em]">Developed By</p>
-                <div className="flex items-center space-x-6">
-                    <a
-                        href="https://jsnportofolio.netlify.app/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
-                        title="Portfolio"
-                    >
-                        <Globe className="w-5 h-5 text-gray-400 hover:text-blue-400" />
-                    </a>
-                    <a
-                        href="https://instagram.com/j.s_nugroho"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
-                        title="Instagram"
-                    >
-                        <Instagram className="w-5 h-5 text-gray-400 hover:text-pink-500" />
-                    </a>
-                    <a
-                        href="https://github.com/jsnugroho"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
-                        title="GitHub"
-                    >
-                        <Github className="w-5 h-5 text-gray-400 hover:text-white" />
-                    </a>
+                {/* Centered Desktop Branding/Contact (Footer) */}
+                <div className="flex flex-col items-center space-y-4 pt-8 animate-fade-in-up stagger-5 border-t border-white/5 w-full">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em]">Developed By</p>
+                    <div className="flex items-center space-x-6">
+                        <a
+                            href="https://jsnportofolio.netlify.app/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+                            title="Portfolio"
+                        >
+                            <Globe className="w-5 h-5 text-gray-400 hover:text-blue-400" />
+                        </a>
+                        <a
+                            href="https://instagram.com/j.s_nugroho"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+                            title="Instagram"
+                        >
+                            <Instagram className="w-5 h-5 text-gray-400 hover:text-pink-500" />
+                        </a>
+                        <a
+                            href="https://github.com/jsnugroho"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+                            title="GitHub"
+                        >
+                            <Github className="w-5 h-5 text-gray-400 hover:text-white" />
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-        </div >
     );
 };
 
