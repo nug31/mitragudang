@@ -12,9 +12,8 @@ import {
   FileSpreadsheet,
   ListFilter,
   Search,
-  History,
-  ArrowUpCircle,
-  ArrowDownCircle,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import InventoryList from "../components/inventory/InventoryList";
 import AddItemModal from "../components/inventory/AddItemModal";
@@ -22,9 +21,6 @@ import EditItemModal from "../components/inventory/EditItemModal";
 import ImportItemsModal from "../components/inventory/ImportItemsModal";
 import CategoryManagement from "../components/inventory/CategoryManagement";
 import BrowseItemsModal from "../components/inventory/BrowseItemsModal";
-import StockHistoryModal from "../components/inventory/StockHistoryModal";
-import StockSummaryCard from "../components/inventory/StockSummaryCard";
-import StockManagement from "../components/inventory/StockManagement";
 import Select from "../components/ui/Select";
 import Input from "../components/ui/Input";
 import { itemService } from "../services/itemService";
@@ -40,14 +36,10 @@ const InventoryPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showBrowseModal, setShowBrowseModal] = useState(false);
-  const [showStockModal, setShowStockModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<Item | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"inventory" | "stock">("inventory");
   const [categoryOptions, setCategoryOptions] = useState([
     { value: "all", label: "All Categories" },
     { value: "electronics", label: "Electronics" },
@@ -251,10 +243,6 @@ const InventoryPage: React.FC = () => {
     setSearchTerm("");
   };
 
-  const handleShowItemHistory = (item: Item) => {
-    setSelectedHistoryItem(item);
-  };
-
   return (
     <MainLayout>
       <div className="mb-6">
@@ -270,16 +258,26 @@ const InventoryPage: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 lg:gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 lg:gap-3 flex-1">
             <Button
-              variant="secondary"
-              onClick={() => setShowHistoryModal(true)}
-              icon={<History className="h-4 w-4" />}
-              className="flex-shrink-0"
+              variant="outline"
+              onClick={() => { }} // Placeholder
+              icon={<TrendingUp className="h-4 w-4" />}
+              className="flex-shrink-0 border-green-600 text-green-600 hover:bg-green-50"
               size="sm"
             >
-              <span className="hidden sm:inline">History</span>
-              <span className="sm:hidden">History</span>
+              <span className="hidden sm:inline">Barang Masuk (Excel)</span>
+              <span className="sm:hidden">Masuk</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => { }} // Placeholder
+              icon={<TrendingDown className="h-4 w-4" />}
+              className="flex-shrink-0 border-red-600 text-red-600 hover:bg-red-50"
+              size="sm"
+            >
+              <span className="hidden sm:inline">Barang Keluar (Excel)</span>
+              <span className="sm:hidden">Keluar</span>
             </Button>
             <Button
               variant="secondary"
@@ -310,15 +308,17 @@ const InventoryPage: React.FC = () => {
             >
               Categories
             </Button>
-            <Button
-              variant="primary"
-              onClick={() => setShowAddModal(true)}
-              icon={<Plus className="h-4 w-4" />}
-              className="flex-shrink-0"
-            >
-              <span className="hidden sm:inline">Add New Item</span>
-              <span className="sm:hidden">Add Item</span>
-            </Button>
+            <div className="w-full lg:w-auto mt-2 lg:mt-0">
+              <Button
+                variant="primary"
+                onClick={() => setShowAddModal(true)}
+                icon={<Plus className="h-4 w-4" />}
+                className="w-full lg:w-auto"
+              >
+                <span className="hidden sm:inline">Add New Item</span>
+                <span className="sm:hidden">Add Item</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -334,91 +334,53 @@ const InventoryPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Stock Summary Card */}
-      <StockSummaryCard refreshTrigger={items.length} />
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              className="mb-0"
+            />
+            <Select
+              value={categoryFilter}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategoryFilter(e.target.value)}
+              options={categoryOptions}
+              className="mb-0"
+            />
+            <Select
+              value={statusFilter}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
+              options={statusOptions}
+              className="mb-0"
+            />
+          </div>
 
-      {/* Tab Navigation */}
-      <div className="mb-6 flex gap-2 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab("inventory")}
-          className={`px-4 py-3 font-medium transition-all ${activeTab === "inventory"
-            ? "border-b-2 border-blue-600 text-blue-600"
-            : "text-gray-600 hover:text-gray-900"
-            }`}
-        >
-          Inventory
-        </button>
-        <button
-          onClick={() => setActiveTab("stock")}
-          className={`px-4 py-3 font-medium transition-all flex items-center gap-2 ${activeTab === "stock"
-            ? "border-b-2 border-blue-600 text-blue-600"
-            : "text-gray-600 hover:text-gray-900"
-            }`}
-        >
-          <ArrowUpCircle className="h-4 w-4" />
-          <ArrowDownCircle className="h-4 w-4" />
-          Stock In/Out
-        </button>
-      </div>
+          <div className="flex justify-between items-center mt-4">
+            <div className="text-sm text-gray-600">
+              <Filter className="h-4 w-4 inline-block mr-1" />
+              <span>{filteredItems.length} items found</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetFilters}
+              icon={<RefreshCw className="h-4 w-4" />}
+            >
+              Reset Filters
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Inventory Tab */}
-      {activeTab === "inventory" && (
-        <>
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Input
-                  placeholder="Search items..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="mb-0"
-                />
-                <Select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  options={categoryOptions}
-                  className="mb-0"
-                />
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  options={statusOptions}
-                  className="mb-0"
-                />
-              </div>
-
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-gray-600">
-                  <Filter className="h-4 w-4 inline-block mr-1" />
-                  <span>{filteredItems.length} items found</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={resetFilters}
-                  icon={<RefreshCw className="h-4 w-4" />}
-                >
-                  Reset Filters
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <InventoryList
-            items={filteredItems}
-            onUpdate={handleUpdateItem}
-            onDelete={handleDeleteItem}
-            onEdit={(item) => setEditingItem(item)}
-            onShowHistory={handleShowItemHistory}
-            isLoading={loading}
-          />
-        </>
-      )}
-
-      {/* Stock In/Out Tab */}
-      {activeTab === "stock" && (
-        <StockManagement />
-      )}
+      <InventoryList
+        items={filteredItems}
+        onUpdate={handleUpdateItem}
+        onDelete={handleDeleteItem}
+        onEdit={(item) => setEditingItem(item)}
+        isLoading={loading}
+      />
 
       {
         showAddModal && (
@@ -448,23 +410,6 @@ const InventoryPage: React.FC = () => {
         )
       }
 
-      {
-        showHistoryModal && (
-          <StockHistoryModal
-            onClose={() => setShowHistoryModal(false)}
-          />
-        )
-      }
-
-      {
-        selectedHistoryItem && (
-          <StockHistoryModal
-            itemId={selectedHistoryItem.id}
-            itemName={selectedHistoryItem.name}
-            onClose={() => setSelectedHistoryItem(null)}
-          />
-        )
-      }
 
       {
         showCategoryModal && (
