@@ -4,25 +4,23 @@ import { Card, CardContent } from "../ui/Card";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
-import { Edit, Trash2, Package, AlertTriangle, History } from "lucide-react";
+import { Edit, Trash2, Package, AlertTriangle } from "lucide-react";
 
 interface InventoryListProps {
   items: Item[];
   onUpdate: (id: string, updates: Partial<Item>) => void;
   onDelete: (id: string) => void;
   onEdit: (item: Item) => void;
-  onShowHistory?: (item: Item) => void;
   isLoading?: boolean;
 }
 
-const InventoryList: React.FC<InventoryListProps> = ({
+const InventoryList = ({
   items,
   onUpdate,
   onDelete,
   onEdit,
-  onShowHistory,
   isLoading = false,
-}) => {
+}: InventoryListProps) => {
   const getStatusBadge = (status: Item["status"]) => {
     switch (status) {
       case "in-stock":
@@ -103,15 +101,6 @@ const InventoryList: React.FC<InventoryListProps> = ({
                   Edit
                 </Button>
                 <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => onShowHistory && onShowHistory(item)}
-                  icon={<History className="h-4 w-4" />}
-                  className="w-full sm:w-auto"
-                >
-                  History
-                </Button>
-                <Button
                   variant="danger"
                   size="sm"
                   onClick={() => onDelete(item.id)}
@@ -149,7 +138,7 @@ const InventoryList: React.FC<InventoryListProps> = ({
                   <Input
                     type="number"
                     value={item.quantity}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleQuantityChange(
                         item.id,
                         parseInt(e.target.value) || 0
@@ -198,7 +187,7 @@ const InventoryList: React.FC<InventoryListProps> = ({
                   <Input
                     type="number"
                     value={item.minQuantity}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleMinQuantityChange(
                         item.id,
                         parseInt(e.target.value) || 0
