@@ -13,6 +13,8 @@ import {
   ListFilter,
   Search,
   History,
+  ArrowUpCircle,
+  ArrowDownCircle,
 } from "lucide-react";
 import InventoryList from "../components/inventory/InventoryList";
 import AddItemModal from "../components/inventory/AddItemModal";
@@ -22,6 +24,7 @@ import CategoryManagement from "../components/inventory/CategoryManagement";
 import BrowseItemsModal from "../components/inventory/BrowseItemsModal";
 import StockHistoryModal from "../components/inventory/StockHistoryModal";
 import StockSummaryCard from "../components/inventory/StockSummaryCard";
+import StockManagement from "../components/inventory/StockManagement";
 import Select from "../components/ui/Select";
 import Input from "../components/ui/Input";
 import { itemService } from "../services/itemService";
@@ -37,12 +40,14 @@ const InventoryPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showBrowseModal, setShowBrowseModal] = useState(false);
+  const [showStockModal, setShowStockModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<Item | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<"inventory" | "stock">("inventory");
   const [categoryOptions, setCategoryOptions] = useState([
     { value: "all", label: "All Categories" },
     { value: "electronics", label: "Electronics" },
@@ -112,6 +117,7 @@ const InventoryPage: React.FC = () => {
           status: item.status || "in-stock",
           lastRestocked: item.lastRestocked,
           price: item.price,
+          unit: item.unit || "pcs",
         };
       });
 
@@ -331,122 +337,170 @@ const InventoryPage: React.FC = () => {
       {/* Stock Summary Card */}
       <StockSummaryCard refreshTrigger={items.length} />
 
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              placeholder="Search items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mb-0"
-            />
-            <Select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              options={categoryOptions}
-              className="mb-0"
-            />
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={statusOptions}
-              className="mb-0"
-            />
-          </div>
+      {/* Tab Navigation */}
+      <div className="mb-6 flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab("inventory")}
+          className={`px-4 py-3 font-medium transition-all ${activeTab === "inventory"
+            ? "border-b-2 border-blue-600 text-blue-600"
+            : "text-gray-600 hover:text-gray-900"
+            }`}
+        >
+          Inventory
+        </button>
+        <button
+          onClick={() => setActiveTab("stock")}
+          className={`px-4 py-3 font-medium transition-all flex items-center gap-2 ${activeTab === "stock"
+            ? "border-b-2 border-blue-600 text-blue-600"
+            : "text-gray-600 hover:text-gray-900"
+            }`}
+        >
+          <ArrowUpCircle className="h-4 w-4" />
+          <ArrowDownCircle className="h-4 w-4" />
+          Stock In/Out
+        </button>
+      </div>
 
-          <div className="flex justify-between items-center mt-4">
-            <div className="text-sm text-gray-600">
-              <Filter className="h-4 w-4 inline-block mr-1" />
-              <span>{filteredItems.length} items found</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetFilters}
-              icon={<RefreshCw className="h-4 w-4" />}
-            >
-              Reset Filters
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Inventory Tab */}
+      {activeTab === "inventory" && (
+        <>
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  placeholder="Search items..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="mb-0"
+                />
+                <Select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  options={categoryOptions}
+                  className="mb-0"
+                />
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  options={statusOptions}
+                  className="mb-0"
+                />
+              </div>
 
-      <InventoryList
-        items={filteredItems}
-        onUpdate={handleUpdateItem}
-        onDelete={handleDeleteItem}
-        onEdit={(item) => setEditingItem(item)}
-        onShowHistory={handleShowItemHistory}
-        isLoading={loading}
-      />
-
-      {showAddModal && (
-        <AddItemModal
-          onClose={() => setShowAddModal(false)}
-          onAdd={handleAddItem}
-        />
-      )}
-
-      {showImportModal && (
-        <ImportItemsModal
-          onClose={() => setShowImportModal(false)}
-          onImport={handleImportItems}
-        />
-      )}
-
-      {editingItem && (
-        <EditItemModal
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-          onUpdate={handleUpdateItem}
-        />
-      )}
-
-      {showHistoryModal && (
-        <StockHistoryModal
-          onClose={() => setShowHistoryModal(false)}
-        />
-      )}
-
-      {selectedHistoryItem && (
-        <StockHistoryModal
-          itemId={selectedHistoryItem.id}
-          itemName={selectedHistoryItem.name}
-          onClose={() => setSelectedHistoryItem(null)}
-        />
-      )}
-
-      {showCategoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Manage Categories</h2>
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-gray-600">
+                  <Filter className="h-4 w-4 inline-block mr-1" />
+                  <span>{filteredItems.length} items found</span>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowCategoryModal(false)}
+                  onClick={resetFilters}
+                  icon={<RefreshCw className="h-4 w-4" />}
                 >
-                  Close
+                  Reset Filters
                 </Button>
               </div>
-              <CategoryManagement onCategoryChange={fetchCategories} />
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+
+          <InventoryList
+            items={filteredItems}
+            onUpdate={handleUpdateItem}
+            onDelete={handleDeleteItem}
+            onEdit={(item) => setEditingItem(item)}
+            onShowHistory={handleShowItemHistory}
+            isLoading={loading}
+          />
+        </>
       )}
 
-      {showBrowseModal && (
-        <BrowseItemsModal
-          items={items}
-          onClose={() => setShowBrowseModal(false)}
-          onSelectItem={(item) => {
-            setEditingItem(item);
-            setShowBrowseModal(false);
-          }}
-        />
+      {/* Stock In/Out Tab */}
+      {activeTab === "stock" && (
+        <StockManagement />
       )}
-    </MainLayout>
+
+      {
+        showAddModal && (
+          <AddItemModal
+            onClose={() => setShowAddModal(false)}
+            onAdd={handleAddItem}
+          />
+        )
+      }
+
+      {
+        showImportModal && (
+          <ImportItemsModal
+            onClose={() => setShowImportModal(false)}
+            onImport={handleImportItems}
+          />
+        )
+      }
+
+      {
+        editingItem && (
+          <EditItemModal
+            item={editingItem}
+            onClose={() => setEditingItem(null)}
+            onUpdate={handleUpdateItem}
+          />
+        )
+      }
+
+      {
+        showHistoryModal && (
+          <StockHistoryModal
+            onClose={() => setShowHistoryModal(false)}
+          />
+        )
+      }
+
+      {
+        selectedHistoryItem && (
+          <StockHistoryModal
+            itemId={selectedHistoryItem.id}
+            itemName={selectedHistoryItem.name}
+            onClose={() => setSelectedHistoryItem(null)}
+          />
+        )
+      }
+
+      {
+        showCategoryModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold">Manage Categories</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCategoryModal(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+                <CategoryManagement onCategoryChange={fetchCategories} />
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        showBrowseModal && (
+          <BrowseItemsModal
+            items={items}
+            onClose={() => setShowBrowseModal(false)}
+            onSelectItem={(item) => {
+              setEditingItem(item);
+              setShowBrowseModal(false);
+            }}
+          />
+        )
+      }
+    </MainLayout >
   );
 };
 
