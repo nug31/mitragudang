@@ -295,8 +295,8 @@ app.get("/api/requests", async (req, res) => {
             'quantity', ri.quantity, 
             'name', i.name, 
             'category', i.category,
-            'stock_before', (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1),
-            'stock_after', (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1)
+            'stock_before', (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND (sh.reference_id = r.id OR sh.notes LIKE '%' || r.id || '%') LIMIT 1),
+            'stock_after', (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND (sh.reference_id = r.id OR sh.notes LIKE '%' || r.id || '%') LIMIT 1)
           ))
           FROM request_items ri
           JOIN items i ON ri."item_id" = i.id
@@ -328,8 +328,8 @@ app.get("/api/requests/user/:userId", async (req, res) => {
             'quantity', ri.quantity, 
             'name', i.name, 
             'category', i.category,
-            'stock_before', (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1),
-            'stock_after', (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1)
+            'stock_before', (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND (sh.reference_id = r.id OR sh.notes LIKE '%' || r.id || '%') LIMIT 1),
+            'stock_after', (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND (sh.reference_id = r.id OR sh.notes LIKE '%' || r.id || '%') LIMIT 1)
           ))
           FROM request_items ri
           JOIN items i ON ri."item_id" = i.id
@@ -364,8 +364,8 @@ app.get("/api/requests/:id", async (req, res) => {
         const request = result.rows[0];
         const itemResult = await db.query(`
       SELECT ri.*, i.name, i.category,
-        (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = ri."request_id" LIMIT 1) as stock_before,
-        (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = ri."request_id" LIMIT 1) as stock_after
+        (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND (sh.reference_id = ri."request_id" OR sh.notes LIKE '%' || ri."request_id" || '%') LIMIT 1) as stock_before,
+        (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND (sh.reference_id = ri."request_id" OR sh.notes LIKE '%' || ri."request_id" || '%') LIMIT 1) as stock_after
       FROM request_items ri
       JOIN items i ON ri."item_id" = i.id
       WHERE ri."request_id" = $1
@@ -756,9 +756,9 @@ app.patch("/api/requests/:id/status", async (req, res) => {
                     // Insert history
                     const note = `Approved request ${id}`;
                     await client.query(`
-                        INSERT INTO stock_history ("item_id", "change_type", "quantity_before", "quantity_change", "quantity_after", notes, "created_by")
-                        VALUES ($1, 'request', $2, $3, $4, $5, $6)
-                    `, [item.item_id, item.current_qty, -item.requested_qty, newQty, note, approved_by || null]);
+                        INSERT INTO stock_history ("item_id", "change_type", "quantity_before", "quantity_change", "quantity_after", "reference_id", notes, "created_by")
+                        VALUES ($1, 'request', $2, $3, $4, $5, $6, $7)
+                    `, [item.item_id, item.current_qty, -item.requested_qty, newQty, id, note, approved_by || null]);
                 }
             }
         }
