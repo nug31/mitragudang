@@ -162,7 +162,7 @@ const RequestCard: React.FC<RequestCardProps> = ({
                 variant="outline"
                 size="sm"
                 icon={<ExternalLink className="h-4 w-4" />}
-                to={`/requests/${encodeURIComponent(itemName)}`}
+                to={`/requests/${id}`}
                 as={Link}
               >
                 View Details

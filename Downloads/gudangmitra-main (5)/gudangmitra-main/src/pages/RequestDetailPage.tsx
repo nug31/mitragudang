@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 
 const RequestDetailPage: React.FC = () => {
-  const { name } = useParams<{ name: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { /* isAuthenticated, */ isAdmin } = useAuth();
   const [request, setRequest] = useState<ItemRequest | null>(null);
@@ -37,8 +37,8 @@ const RequestDetailPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    if (!name) {
-      setError("Request name is missing");
+    if (!id) {
+      setError("Request ID is missing");
       setLoading(false);
       return;
     }
@@ -46,58 +46,21 @@ const RequestDetailPage: React.FC = () => {
     const fetchRequestDetails = async () => {
       setLoading(true);
       try {
-        // Decode the URL-encoded name
-        const decodedName = decodeURIComponent(name);
-        console.log("Fetching request details for:", decodedName);
+        console.log("Fetching request details for ID:", id);
 
-        // Try multiple approaches to find the request
+        // Fetch the request directly by ID
         let requestData;
-
-        // First, try to get the request directly by ID (in case the name is actually an ID)
         try {
-          console.log("Trying to fetch request by ID:", decodedName);
-          requestData = await requestService.getRequestById(decodedName);
-          console.log("Successfully fetched request by ID:", requestData);
+          requestData = await requestService.getRequestById(id);
         } catch (idError) {
           console.log("Failed to fetch request by ID:", idError);
-
-          // If that fails, try to find by name
+          // Fallback to searching by name just in case old URLs are still bookmarked
           try {
-            console.log("Trying to fetch request by name:", decodedName);
-            requestData = await requestService.getRequestByName(decodedName);
-            console.log("Successfully fetched request by name:", requestData);
+            const decodedId = decodeURIComponent(id);
+            requestData = await requestService.getRequestByName(decodedId);
           } catch (nameError) {
-            console.log("Failed to fetch request by name:", nameError);
-
-            // If both approaches fail, try one more approach - get all requests and filter
-            console.log("Trying to find request in all requests");
-            const allRequests = await requestService.getAllRequests();
-            console.log("All available requests:", allRequests);
-
-            // First try direct match
-            const directMatch = allRequests.find(
-              (req) => req.itemName.toLowerCase() === decodedName.toLowerCase()
-            );
-
-            // Then try partial match
-            const partialMatch = allRequests.find((req) =>
-              req.itemName.toLowerCase().includes(decodedName.toLowerCase())
-            );
-
-            // Then try ID match again
-            const idMatch = allRequests.find((req) => req.id === decodedName);
-
-            console.log("Direct match:", directMatch);
-            console.log("Partial match:", partialMatch);
-            console.log("ID match:", idMatch);
-
-            // Use the first match found
-            requestData = directMatch || partialMatch || idMatch;
-
-            if (!requestData) {
-              console.error("No matching request found for:", decodedName);
-              throw new Error("Request not found");
-            }
+            console.error("No matching request found for:", id);
+            throw new Error("Request not found");
           }
         }
 
@@ -135,7 +98,7 @@ const RequestDetailPage: React.FC = () => {
     };
 
     fetchRequestDetails();
-  }, [name]);
+  }, [id]);
 
   const handleStatusChange = async (status: RequestStatus) => {
     if (!request) return;
