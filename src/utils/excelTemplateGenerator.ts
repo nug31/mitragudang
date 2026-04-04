@@ -149,47 +149,57 @@ export const exportRequestsToExcel = (
   // Create a new workbook
   const wb = XLSX.utils.book_new();
 
-  // Format the requests data for Excel
-  const excelData = requests.map((request, index) => ({
-    "No.": index + 1,
-    "Request ID": request.id,
-    "Item Name": request.itemName,
-    "Quantity": request.quantity,
-    "Priority": request.priority.charAt(0).toUpperCase() + request.priority.slice(1),
-    "Status": request.status.charAt(0).toUpperCase() + request.status.slice(1),
-    "Requester": request.requesterName || `User ${request.userId}`,
-    "Email": request.requesterEmail || "",
-    "Project": request.projectName || "",
-    "Description": request.description,
-    "Requested Delivery": request.requestedDeliveryDate ?
-      new Date(request.requestedDeliveryDate).toLocaleDateString() : "",
-    "Created Date": request.createdAt ?
-      new Date(request.createdAt).toLocaleDateString() : "",
-    "Updated Date": request.updatedAt ?
-      new Date(request.updatedAt).toLocaleDateString() : ""
-  }));
+  // Format the requests data for Excel - sesuai format di gambar
+  const excelData = requests.map((request, index) => {
+    const req = request as any;
+
+    // Ambil stok dari items jika tersedia (untuk request dengan multi-item)
+    const firstItem = req.items && req.items.length > 0 ? req.items[0] : null;
+    const stockBefore = firstItem?.stock_before ?? req.stock_before ?? "";
+    const stockAfter  = firstItem?.stock_after  ?? req.stock_after  ?? "";
+
+    // Requester name: prioritize requester_name from API response
+    const requesterName =
+      req.requester_name ||
+      request.requesterName ||
+      `User ${request.userId}`;
+
+    return {
+      "No.": index + 1,
+      "ID": request.id,
+      "Item Name": request.itemName || req.project_name || "-",
+      "Quantity": request.quantity,
+      "Stock Sebelum": stockBefore,
+      "Stock Sesudah": stockAfter,
+      "Priority":
+        request.priority.charAt(0).toUpperCase() + request.priority.slice(1),
+      "Status":
+        request.status.charAt(0).toUpperCase() + request.status.slice(1),
+      "Requester": requesterName,
+      "Email": request.requesterEmail || req.requester_email || "",
+      "Project": request.projectName || req.project_name || "",
+      "Description": req.reason || request.description || "",
+    };
+  });
 
   // Create a worksheet from the data
   const ws = XLSX.utils.json_to_sheet(excelData);
 
-  // Add column width information for better readability
-  const colWidths = [
+  // Set column widths sesuai konten
+  ws["!cols"] = [
     { wch: 5 },  // No.
-    { wch: 15 }, // Request ID
-    { wch: 25 }, // Item Name
+    { wch: 36 }, // ID
+    { wch: 28 }, // Item Name
     { wch: 10 }, // Quantity
+    { wch: 14 }, // Stock Sebelum
+    { wch: 13 }, // Stock Sesudah
     { wch: 10 }, // Priority
     { wch: 12 }, // Status
-    { wch: 20 }, // Requester
-    { wch: 25 }, // Email
-    { wch: 20 }, // Project
+    { wch: 22 }, // Requester
+    { wch: 30 }, // Email
+    { wch: 22 }, // Project
     { wch: 40 }, // Description
-    { wch: 15 }, // Requested Delivery
-    { wch: 15 }, // Created Date
-    { wch: 15 }  // Updated Date
   ];
-
-  ws["!cols"] = colWidths;
 
   // Add the worksheet to the workbook
   XLSX.utils.book_append_sheet(wb, ws, "Requests");
@@ -299,43 +309,42 @@ export const exportMonthlyReportToExcel = (
   XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
 
   // Create detailed requests sheet
-  const detailData = requests.map((request, index) => ({
-    "No.": index + 1,
-    "Request ID": request.id,
-    "Item Name": request.itemName,
-    "Quantity": request.quantity,
-    "Priority": request.priority.charAt(0).toUpperCase() + request.priority.slice(1),
-    "Status": request.status.charAt(0).toUpperCase() + request.status.slice(1),
-    "Requester": request.requesterName || `User ${request.userId}`,
-    "Email": request.requesterEmail || "",
-    "Project": request.projectName || "",
-    "Description": request.description,
-    "Requested Delivery": request.requestedDeliveryDate
-      ? new Date(request.requestedDeliveryDate).toLocaleDateString()
-      : "",
-    "Created Date": request.createdAt
-      ? new Date(request.createdAt).toLocaleDateString()
-      : "",
-    "Updated Date": request.updatedAt
-      ? new Date(request.updatedAt).toLocaleDateString()
-      : "",
-  }));
+  const detailData = requests.map((request, index) => {
+    const req = request as any;
+    const firstItem = req.items && req.items.length > 0 ? req.items[0] : null;
+    const stockBefore = firstItem?.stock_before ?? req.stock_before ?? "";
+    const stockAfter  = firstItem?.stock_after  ?? req.stock_after  ?? "";
+    const requesterName = req.requester_name || request.requesterName || `User ${request.userId}`;
+    return {
+      "No.": index + 1,
+      "ID": request.id,
+      "Item Name": request.itemName || req.project_name || "-",
+      "Quantity": request.quantity,
+      "Stock Sebelum": stockBefore,
+      "Stock Sesudah": stockAfter,
+      "Priority": request.priority.charAt(0).toUpperCase() + request.priority.slice(1),
+      "Status": request.status.charAt(0).toUpperCase() + request.status.slice(1),
+      "Requester": requesterName,
+      "Email": request.requesterEmail || req.requester_email || "",
+      "Project": request.projectName || req.project_name || "",
+      "Description": req.reason || request.description || "",
+    };
+  });
 
   const detailWs = XLSX.utils.json_to_sheet(detailData);
   detailWs["!cols"] = [
-    { wch: 5 }, // No.
-    { wch: 15 }, // Request ID
-    { wch: 25 }, // Item Name
+    { wch: 5 },  // No.
+    { wch: 36 }, // ID
+    { wch: 28 }, // Item Name
     { wch: 10 }, // Quantity
+    { wch: 14 }, // Stock Sebelum
+    { wch: 13 }, // Stock Sesudah
     { wch: 10 }, // Priority
     { wch: 12 }, // Status
-    { wch: 20 }, // Requester
-    { wch: 25 }, // Email
-    { wch: 20 }, // Project
+    { wch: 22 }, // Requester
+    { wch: 30 }, // Email
+    { wch: 22 }, // Project
     { wch: 40 }, // Description
-    { wch: 15 }, // Requested Delivery
-    { wch: 15 }, // Created Date
-    { wch: 15 }, // Updated Date
   ];
   XLSX.utils.book_append_sheet(wb, detailWs, "Detailed Requests");
 
