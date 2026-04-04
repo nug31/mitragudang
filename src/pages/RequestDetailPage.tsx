@@ -37,6 +37,9 @@ const RequestDetailPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedItems, setEditedItems] = useState<any[]>([]);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [editedRequesterName, setEditedRequesterName] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
 
   useEffect(() => {
     if (!id) {
@@ -160,6 +163,35 @@ const RequestDetailPage: React.FC = () => {
     if (request && request.items) {
       setEditedItems([...request.items]);
       setIsEditing(true);
+    }
+  };
+
+  const startEditingDetails = () => {
+    if (request) {
+      const currentName = (request as any).requester_name ||
+        (request as any).requesterName ||
+        requester?.username || "";
+      const currentDesc = (request as any).reason || request.description || "";
+      setEditedRequesterName(currentName);
+      setEditedDescription(currentDesc);
+      setIsEditingDetails(true);
+    }
+  };
+
+  const handleSaveDetails = async () => {
+    if (!request) return;
+    setActionLoading(true);
+    try {
+      await requestService.updateRequest(request.id, {
+        reason: editedDescription,
+      } as any);
+      // update local state
+      setRequest({ ...request, reason: editedDescription, description: editedDescription } as any);
+      setIsEditingDetails(false);
+    } catch (err) {
+      setError("Failed to save details: " + (err as Error).message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -363,28 +395,69 @@ const RequestDetailPage: React.FC = () => {
                       </Badge>
                     </div>
 
-                    {(request.reason || request.description) && (
-                      <div>
+                    {/* Description - editable by admin */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
                         <p className="text-sm text-gray-500">Description</p>
-                        <p className="font-medium">{request.reason || request.description}</p>
+                        {isAdmin && !isEditingDetails && (
+                          <button
+                            onClick={startEditingDetails}
+                            className="text-xs text-blue-500 hover:text-blue-700 underline"
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
-                    )}
+                      {isEditingDetails ? (
+                        <>
+                          <textarea
+                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                            rows={3}
+                            value={editedDescription}
+                            onChange={(e) => setEditedDescription(e.target.value)}
+                            placeholder="Enter description..."
+                          />
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => setIsEditingDetails(false)}
+                              className="text-xs px-3 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleSaveDetails}
+                              disabled={actionLoading}
+                              className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {actionLoading ? "Saving..." : "Save"}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="font-medium">
+                          {(request as any).reason || request.description || <span className="text-gray-400 italic">No description</span>}
+                        </p>
+                      )}
+                    </div>
 
                     <div className="pt-2 border-t border-gray-100">
-                      <p className="text-sm text-gray-500 mb-2">Requested By</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm text-gray-500">Requested By</p>
+                      </div>
                       <div className="flex items-center">
                         <User className="h-5 w-5 text-blue-600 mr-2" />
                         <div>
                           <p className="font-medium">
-                            {requester?.username ||
-                              request.requesterName ||
+                            {(request as any).requester_name ||
+                              requester?.username ||
+                              (request as any).requesterName ||
                               "Unknown User"}
                           </p>
                           <div className="flex items-center text-sm text-gray-600">
                             <Mail className="h-3 w-3 mr-1" />
                             <span>
                               {requester?.email ||
-                                request.requesterEmail ||
+                                (request as any).requesterEmail ||
                                 "No email available"}
                             </span>
                           </div>
