@@ -248,7 +248,6 @@ const RequestForm: React.FC<RequestFormProps> = ({
               type="date"
               value={deliveryDate}
               onChange={(e) => setDeliveryDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
               required
             />
 

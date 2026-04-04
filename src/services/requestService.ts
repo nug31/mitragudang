@@ -307,13 +307,31 @@ class RequestService {
       console.log(`Updating request ${id} via API...`);
       console.log("Updates:", updates);
 
-      // If only updating status, use the dedicated endpoint
-      if (Object.keys(updates).length === 1 && updates.status) {
+      // If only updating status, we could use updateRequestStatus, 
+      // but our new general PATCH /api/requests/:id also handles it.
+      // However, the status update has special logic (stock deduction), 
+      // so we should be careful. 
+      // If status is present, let's use the dedicated status endpoint for safety 
+      // unless we want to allow updating both at once.
+      if (updates.status && Object.keys(updates).length === 1) {
         return this.updateRequestStatus(id, updates.status);
       }
 
-      // For now, we only support updating the status
-      throw new Error("Full request updates not implemented yet");
+      const response = await fetch(`${API_URL}/requests/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error updating request: ${errorText}`);
+      }
+
+      // Get the updated request
+      return this.getRequestById(id) as Promise<ItemRequest>;
     } catch (error) {
       console.error(`Error updating request ${id}:`, error);
       throw error;

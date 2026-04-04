@@ -614,6 +614,68 @@ app.get("/api/dashboard/activity", async (req, res) => {
     }
 });
 
+app.patch("/api/requests/:id", async (req, res) => {
+    const client = await db.pool.connect();
+    try {
+        const { id } = req.params;
+        const { project_name, reason, priority, due_date, items } = req.body;
+
+        await client.query('BEGIN');
+
+        // Update main request fields
+        const updateFields = [];
+        const updateValues = [];
+        let paramIndex = 1;
+
+        if (project_name) {
+            updateFields.push(`"project_name" = $${paramIndex++}`);
+            updateValues.push(project_name);
+        }
+        if (reason !== undefined) {
+            updateFields.push(`"reason" = $${paramIndex++}`);
+            updateValues.push(reason);
+        }
+        if (priority) {
+            updateFields.push(`"priority" = $${paramIndex++}`);
+            updateValues.push(priority);
+        }
+        if (due_date !== undefined) {
+            updateFields.push(`"due_date" = $${paramIndex++}`);
+            updateValues.push(due_date);
+        }
+
+        if (updateFields.length > 0) {
+            updateValues.push(id);
+            await client.query(
+                `UPDATE requests SET ${updateFields.join(", ")}, "updatedAt" = NOW() WHERE id = $${paramIndex}`,
+                updateValues
+            );
+        }
+
+        // Update item quantities
+        if (items && Array.isArray(items)) {
+            for (const item of items) {
+                const itemId = item.item_id || item.itemId;
+                if (itemId && item.quantity !== undefined) {
+                    await client.query(
+                        'UPDATE request_items SET quantity = $1 WHERE "request_id" = $2 AND "item_id" = $3',
+                        [item.quantity, id, itemId]
+                    );
+                }
+            }
+        }
+
+        await client.query('COMMIT');
+        res.json({ success: true, message: "Request updated successfully" });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error("Update request error:", error);
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        client.release();
+    }
+});
+
 // Update request status with stock deduction and history
 app.patch("/api/requests/:id/status", async (req, res) => {
     const client = await db.pool.connect();

@@ -35,6 +35,8 @@ const RequestDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedItems, setEditedItems] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) {
@@ -100,6 +102,9 @@ const RequestDetailPage: React.FC = () => {
 
     setActionLoading(true);
     try {
+      // In the new structure, we use fulfilled for stock deduction in index.js, 
+      // and approved in railway-server.cjs. 
+      // For consistency with RequestService, we use the method that handles status.
       const updatedRequest = await requestService.updateRequestStatus(
         request.id,
         status
@@ -114,6 +119,47 @@ const RequestDetailPage: React.FC = () => {
       setError("Failed to update request status");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleSaveItems = async () => {
+    if (!request) return;
+    
+    setActionLoading(true);
+    try {
+      console.log("Saving adjusted items:", editedItems);
+      
+      const updatedRequest = await requestService.updateRequest(request.id, {
+        items: editedItems.map(item => ({
+          item_id: item.item_id || item.itemId,
+          quantity: item.quantity
+        }))
+      });
+      
+      if (updatedRequest) {
+        setRequest(updatedRequest);
+        setIsEditing(false);
+        // Refresh local data
+        window.location.reload(); 
+      }
+    } catch (err) {
+      console.error("Error updating request items:", err);
+      setError("Failed to save changes: " + (err as Error).message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleQuantityChange = (index: number, newQty: number) => {
+    const newItems = [...editedItems];
+    newItems[index] = { ...newItems[index], quantity: newQty };
+    setEditedItems(newItems);
+  };
+
+  const startEditing = () => {
+    if (request && request.items) {
+      setEditedItems([...request.items]);
+      setIsEditing(true);
     }
   };
 
@@ -266,7 +312,7 @@ const RequestDetailPage: React.FC = () => {
                       <div>
                         <p className="text-sm text-gray-500">Items Requested</p>
                         <div className="space-y-2">
-                          {request.items.map((item: any, index: number) => (
+                          {(isEditing ? editedItems : request.items).map((item: any, index: number) => (
                             <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
                               <div>
                                 <p className="font-medium">{item.name}</p>
@@ -274,7 +320,20 @@ const RequestDetailPage: React.FC = () => {
                                 <p className="text-xs text-gray-500">Category: {item.category}</p>
                               </div>
                               <div className="text-right">
-                                <p className="font-medium">Qty: {item.quantity}</p>
+                                {isEditing ? (
+                                  <div className="flex items-center">
+                                    <span className="mr-2 text-sm">Qty:</span>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      className="w-20 p-1 border border-gray-300 rounded text-right"
+                                      value={item.quantity}
+                                      onChange={(e) => handleQuantityChange(index, parseInt(e.target.value) || 0)}
+                                    />
+                                  </div>
+                                ) : (
+                                  <p className="font-medium">Qty: {item.quantity}</p>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -382,23 +441,53 @@ const RequestDetailPage: React.FC = () => {
 
             {isAdmin && request.status === "pending" && (
               <CardFooter className="bg-gray-50 border-t border-gray-200 p-4">
-                <div className="flex justify-end gap-3">
-                  <Button
-                    variant="danger"
-                    onClick={() => handleStatusChange("rejected")}
-                    disabled={actionLoading}
-                    icon={<XCircle className="h-4 w-4 mr-1" />}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    variant="success"
-                    onClick={() => handleStatusChange("approved")}
-                    disabled={actionLoading}
-                    icon={<CheckCircle className="h-4 w-4 mr-1" />}
-                  >
-                    Approve
-                  </Button>
+                <div className="flex justify-end gap-3 flex-wrap">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEditing(false)}
+                        disabled={actionLoading}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={handleSaveItems}
+                        isLoading={actionLoading}
+                        disabled={actionLoading}
+                        icon={<CheckCircle className="h-4 w-4 mr-1" />}
+                      >
+                        Save Quantities
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={startEditing}
+                        disabled={actionLoading}
+                      >
+                        Edit Request
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleStatusChange("rejected")}
+                        disabled={actionLoading}
+                        icon={<XCircle className="h-4 w-4 mr-1" />}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        variant="success"
+                        onClick={() => handleStatusChange("approved")}
+                        disabled={actionLoading}
+                        icon={<CheckCircle className="h-4 w-4 mr-1" />}
+                      >
+                        Approve
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardFooter>
             )}

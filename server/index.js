@@ -1108,6 +1108,73 @@ app.patch("/api/requests/:id/status", async (req, res) => {
   }
 });
 
+app.patch("/api/requests/:id", async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    const { project_name, reason, priority, due_date, items } = req.body;
+
+    console.log(`PATCH /api/requests/${id} - Updating request details`);
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    // Update main request fields
+    const updateFields = [];
+    const updateValues = [];
+
+    if (project_name) {
+      updateFields.push("project_name = ?");
+      updateValues.push(project_name);
+    }
+    if (reason !== undefined) {
+      updateFields.push("reason = ?");
+      updateValues.push(reason);
+    }
+    if (priority) {
+      updateFields.push("priority = ?");
+      updateValues.push(priority);
+    }
+    if (due_date !== undefined) {
+      updateFields.push("due_date = ?");
+      updateValues.push(due_date);
+    }
+
+    if (updateFields.length > 0) {
+      updateValues.push(id);
+      await connection.query(
+        `UPDATE requests SET ${updateFields.join(", ")} WHERE id = ?`,
+        updateValues
+      );
+    }
+
+    // Update item quantities if provided
+    if (items && Array.isArray(items)) {
+      for (const item of items) {
+        if (item.item_id && item.quantity !== undefined) {
+          await connection.query(
+            "UPDATE request_items SET quantity = ? WHERE request_id = ? AND item_id = ?",
+            [item.quantity, id, item.item_id]
+          );
+        }
+      }
+    }
+
+    await connection.commit();
+    res.json({ success: true, message: "Request updated successfully" });
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error(`Error updating request ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating request",
+      error: error.message,
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
 // Delete a request
 app.delete("/api/requests/:id", async (req, res) => {
   let connection;
