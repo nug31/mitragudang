@@ -171,6 +171,40 @@ app.get("/api/stock-summary", async (req, res) => {
     }
 });
 
+// Get all stock history with optional filters (for export)
+app.get("/api/stock-history", async (req, res) => {
+    try {
+        const { item_id, change_type, limit = 2000 } = req.query;
+
+        let query = `
+          SELECT sh.*, i.name as item_name, i.category
+          FROM stock_history sh
+          JOIN items i ON sh."item_id" = i.id
+          WHERE 1=1
+        `;
+        const params = [];
+        let paramIndex = 1;
+
+        if (item_id) {
+            query += ` AND sh."item_id" = $${paramIndex++}`;
+            params.push(item_id);
+        }
+        if (change_type) {
+            query += ` AND sh."change_type" = $${paramIndex++}`;
+            params.push(change_type);
+        }
+
+        query += ` ORDER BY sh."createdAt" DESC LIMIT $${paramIndex}`;
+        params.push(parseInt(limit) || 2000);
+
+        const result = await db.query(query, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Stock History error:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.get("/api/stock-history/item/:itemId", async (req, res) => {
     try {
         const { itemId } = req.params;

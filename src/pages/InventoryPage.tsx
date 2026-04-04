@@ -28,6 +28,7 @@ import { itemService } from "../services/itemService";
 import { categoryService } from "../services/categoryService";
 import { normalizeCategory, categoriesAreEqual } from "../utils/categoryUtils";
 import { API_BASE_URL } from "../config";
+import * as XLSX from "xlsx";
 
 const InventoryPage: React.FC = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -246,6 +247,79 @@ const InventoryPage: React.FC = () => {
     setSearchTerm("");
   };
 
+  const downloadBarangKeluar = async () => {
+    try {
+      // Fetch stock history with negative quantity_change (barang keluar)
+      const response = await fetch(`${API_BASE_URL}/stock-history?limit=2000`);
+      if (!response.ok) throw new Error("Failed to fetch stock history");
+      const history: any[] = await response.json();
+
+      // Filter hanya yang quantity_change < 0 (barang keluar)
+      const keluarData = history.filter((row: any) => {
+        const change = Number(row.quantity_change);
+        return change < 0;
+      });
+
+      if (keluarData.length === 0) {
+        alert("Tidak ada data barang keluar.");
+        return;
+      }
+
+      // Format rows sesuai tampilan Excel
+      const rows = keluarData.map((row: any) => {
+        const date = new Date(row.created_at || row.createdAt);
+        const tanggal = date.toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "numeric",
+          year: "numeric",
+          timeZone: "Asia/Jakarta"
+        });
+        const jam = date.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Jakarta"
+        });
+        return {
+          Tanggal: tanggal,
+          Jam: jam,
+          "Nama Barang": row.item_name || row.name || "-",
+          Kategori: row.category || "-",
+          "Perubahan (-)": Number(row.quantity_change),
+          "Stok Sebelum": Number(row.quantity_before),
+          "Stok Setelah": Number(row.quantity_after),
+          Catatan: row.notes || "-",
+          Oleh: row.created_by || "-",
+        };
+      });
+
+      // Buat workbook Excel
+      const ws = XLSX.utils.json_to_sheet(rows);
+
+      // Set lebar kolom
+      ws["!cols"] = [
+        { wch: 12 }, // Tanggal
+        { wch: 8 },  // Jam
+        { wch: 28 }, // Nama Barang
+        { wch: 20 }, // Kategori
+        { wch: 14 }, // Perubahan
+        { wch: 13 }, // Stok Sebelum
+        { wch: 12 }, // Stok Setelah
+        { wch: 20 }, // Catatan
+        { wch: 12 }, // Oleh
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Barang Keluar");
+
+      // Nama file dengan tanggal hari ini
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, "-");
+      XLSX.writeFile(wb, `Barang_Keluar_${today}.xlsx`);
+    } catch (err) {
+      console.error("Error downloading barang keluar:", err);
+      alert("Gagal mengunduh data barang keluar.");
+    }
+  };
+
   return (
     <MainLayout>
       <div className="mb-6">
@@ -279,10 +353,7 @@ const InventoryPage: React.FC = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setImportStockType("out");
-                  setShowImportStockModal(true);
-                }}
+                onClick={downloadBarangKeluar}
                 icon={<ArrowDownCircle className="h-4 w-4" />}
                 className="flex-shrink-0 border-red-600 text-red-600 hover:bg-red-50"
                 size="sm"
