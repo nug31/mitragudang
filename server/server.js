@@ -294,7 +294,9 @@ app.get("/api/requests", async (req, res) => {
             'item_id', ri."item_id", 
             'quantity', ri.quantity, 
             'name', i.name, 
-            'category', i.category
+            'category', i.category,
+            'stock_before', (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1),
+            'stock_after', (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1)
           ))
           FROM request_items ri
           JOIN items i ON ri."item_id" = i.id
@@ -325,7 +327,9 @@ app.get("/api/requests/user/:userId", async (req, res) => {
             'item_id', ri."item_id", 
             'quantity', ri.quantity, 
             'name', i.name, 
-            'category', i.category
+            'category', i.category,
+            'stock_before', (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1),
+            'stock_after', (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = r.id LIMIT 1)
           ))
           FROM request_items ri
           JOIN items i ON ri."item_id" = i.id
@@ -359,7 +363,9 @@ app.get("/api/requests/:id", async (req, res) => {
 
         const request = result.rows[0];
         const itemResult = await db.query(`
-      SELECT ri.*, i.name, i.category
+      SELECT ri.*, i.name, i.category,
+        (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = ri."request_id" LIMIT 1) as stock_before,
+        (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri."item_id" AND sh.reference_id = ri."request_id" LIMIT 1) as stock_after
       FROM request_items ri
       JOIN items i ON ri."item_id" = i.id
       WHERE ri."request_id" = $1

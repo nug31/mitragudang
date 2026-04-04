@@ -612,7 +612,9 @@ app.get("/api/requests", async (req, res) => {
       requests.map(async (request) => {
         const [items] = await pool.query(
           `
-          SELECT ri.*, i.name, i.description, i.category
+          SELECT ri.*, i.name, i.description, i.category,
+                 (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri.item_id AND sh.reference_id = ri.request_id LIMIT 1) as stock_before,
+                 (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri.item_id AND sh.reference_id = ri.request_id LIMIT 1) as stock_after
           FROM request_items ri
           JOIN items i ON ri.item_id = i.id
           WHERE ri.request_id = ?
@@ -659,7 +661,9 @@ app.get("/api/requests/user/:userId", async (req, res) => {
       requests.map(async (request) => {
         const [items] = await pool.query(
           `
-          SELECT ri.*, i.name, i.description, i.category
+          SELECT ri.*, i.name, i.description, i.category,
+                 (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri.item_id AND sh.reference_id = ri.request_id LIMIT 1) as stock_before,
+                 (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri.item_id AND sh.reference_id = ri.request_id LIMIT 1) as stock_after
           FROM request_items ri
           JOIN items i ON ri.item_id = i.id
           WHERE ri.request_id = ?
@@ -714,7 +718,9 @@ app.get("/api/requests/:id", async (req, res) => {
     // Get items for the request
     const [items] = await pool.query(
       `
-      SELECT ri.*, i.name, i.description, i.category
+      SELECT ri.*, i.name, i.description, i.category,
+             (SELECT quantity_before FROM stock_history sh WHERE sh.item_id = ri.item_id AND sh.reference_id = ri.request_id LIMIT 1) as stock_before,
+             (SELECT quantity_after FROM stock_history sh WHERE sh.item_id = ri.item_id AND sh.reference_id = ri.request_id LIMIT 1) as stock_after
       FROM request_items ri
       JOIN items i ON ri.item_id = i.id
       WHERE ri.request_id = ?
