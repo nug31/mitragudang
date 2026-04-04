@@ -163,8 +163,8 @@ class RequestService {
       status: this.mapApiStatusToRequestStatus(apiRequest.status),
       description: apiRequest.reason || "",
       requestedDeliveryDate: apiRequest.due_date || "",
-      createdAt: apiRequest.created_at || new Date().toISOString(),
-      updatedAt: apiRequest.updated_at || new Date().toISOString(),
+      createdAt: apiRequest.created_at || apiRequest.createdAt || apiRequest.createdDate || new Date().toISOString(),
+      updatedAt: apiRequest.updated_at || apiRequest.updatedAt || apiRequest.updatedDate || new Date().toISOString(),
       // Additional fields from API
       projectName: apiRequest.project_name,
       // Use the requester_name from the API response, or the username from the current user
