@@ -179,6 +179,15 @@ export const exportRequestsToExcel = (
       "Email": request.requesterEmail || req.requester_email || "",
       "Project": request.projectName || req.project_name || "",
       "Description": req.reason || request.description || "",
+      "Requested Delivery": request.requestedDeliveryDate
+        ? new Date(request.requestedDeliveryDate).toLocaleDateString()
+        : "",
+      "Created Date": request.createdAt
+        ? new Date(request.createdAt).toLocaleString('id-ID')
+        : "",
+      "Updated Date": request.updatedAt
+        ? new Date(request.updatedAt).toLocaleString('id-ID')
+        : "",
     };
   });
 
@@ -199,6 +208,9 @@ export const exportRequestsToExcel = (
     { wch: 30 }, // Email
     { wch: 22 }, // Project
     { wch: 40 }, // Description
+    { wch: 15 }, // Requested Delivery
+    { wch: 20 }, // Created Date
+    { wch: 20 }, // Updated Date
   ];
 
   // Add the worksheet to the workbook
@@ -328,6 +340,15 @@ export const exportMonthlyReportToExcel = (
       "Email": request.requesterEmail || req.requester_email || "",
       "Project": request.projectName || req.project_name || "",
       "Description": req.reason || request.description || "",
+      "Requested Delivery": request.requestedDeliveryDate
+        ? new Date(request.requestedDeliveryDate).toLocaleDateString()
+        : "",
+      "Created Date": request.createdAt
+        ? new Date(request.createdAt).toLocaleString('id-ID')
+        : "",
+      "Updated Date": request.updatedAt
+        ? new Date(request.updatedAt).toLocaleString('id-ID')
+        : "",
     };
   });
 
@@ -345,6 +366,9 @@ export const exportMonthlyReportToExcel = (
     { wch: 30 }, // Email
     { wch: 22 }, // Project
     { wch: 40 }, // Description
+    { wch: 15 }, // Requested Delivery
+    { wch: 20 }, // Created Date
+    { wch: 20 }, // Updated Date
   ];
   XLSX.utils.book_append_sheet(wb, detailWs, "Detailed Requests");
 
