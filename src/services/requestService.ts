@@ -1,5 +1,4 @@
 import { ItemRequest, RequestPriority, RequestStatus } from "../types";
-import { itemService } from "./itemService";
 import { validateItemId } from "../utils/itemUtils";
 import { authService } from "../utils/auth";
 import { API_BASE_URL } from "../config";
@@ -469,23 +468,19 @@ class RequestService {
    */
   async getMonthlyRequests(year: number, month: number): Promise<ItemRequest[]> {
     try {
-      console.log(`Fetching requests for ${month}/${year}...`);
+      console.log(`Fetching requests for ${month}/${year} from API...`);
 
-      // Create start and end dates for the month
-      const startDate = new Date(year, month - 1, 1); // month - 1 because Date months are 0-indexed
-      const endDate = new Date(year, month, 0); // 0 gets the last day of the previous month
-      endDate.setHours(23, 59, 59, 999); // Set to end of day
+      const response = await fetch(`${API_URL}/requests?month=${month}&year=${year}&limit=2000`);
 
-      console.log(`Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-      const allRequests = await this.getAllRequests();
-      const monthlyRequests = allRequests.filter((req) => {
-        const requestDate = new Date(req.createdAt);
-        return requestDate >= startDate && requestDate <= endDate;
-      });
+      const requests = await response.json();
+      console.log(`Received ${requests.length} monthly requests from API for ${month}/${year}`);
 
-      console.log(`Found ${monthlyRequests.length} requests for ${month}/${year}`);
-      return monthlyRequests;
+      // Map the API response to our ItemRequest type
+      return this.mapApiRequestsToItemRequests(requests);
     } catch (error) {
       console.error(`Error fetching monthly requests for ${month}/${year}:`, error);
       return [];
