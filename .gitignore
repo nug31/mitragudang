@@ -62,3 +62,7 @@ ehthumbs.db
 migration-data/
 exports/
 uploads/
+
+# Local instance copies
+temp02/
+temp03/
