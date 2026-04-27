@@ -112,7 +112,10 @@ class CategoryService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create category: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: "Server error" }));
+        const errorMessage = errorData.error || "Failed to create category";
+        const errorDetail = errorData.detail ? ` (${errorData.detail})` : "";
+        throw new Error(`${errorMessage}${errorDetail}`);
       }
 
       return await response.json();
