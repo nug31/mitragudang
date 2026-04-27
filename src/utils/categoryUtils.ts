@@ -135,8 +135,9 @@ export const normalizeCategory = (
     return result;
   }
 
-  // Default to "other" if no match found
-  const result = "other";
+  // Return the processed category name as-is if it doesn't match any special rules.
+  // This allows dynamic categories from the database to work correctly with filtering.
+  const result = category;
 
   // Log the final normalized category for debugging
   console.debug(`Category normalization: "${originalCategory}" -> "${result}"`);
