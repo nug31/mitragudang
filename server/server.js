@@ -248,7 +248,7 @@ app.post("/api/categories", async (req, res) => {
         if (!name) return res.status(400).json({ success: false, message: "Category name is required" });
 
         const result = await db.query(
-            "INSERT INTO categories (name, description, created_at) VALUES ($1, $2, NOW()) RETURNING *",
+            "INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING *",
             [name, description || ""]
         );
         res.status(201).json({ success: true, category: result.rows[0] });
