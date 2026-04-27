@@ -46,41 +46,14 @@ const BrowseItemsPage: React.FC = () => {
   // Function to fetch categories from the database
   const fetchCategories = async () => {
     try {
-      // Directly fetch from API to bypass categoryService issues
-      const response = await fetch(`${API_BASE_URL}/categories`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.categories && Array.isArray(data.categories)) {
-          // Format categories for display
-          const formatCategoryName = (categoryString: string): string => {
-            const categoryMapping: Record<string, string> = {
-              'cleaning-materials': 'Cleaning Materials',
-              'office-supplies': 'Office Supplies',
-              'Office-supplies': 'Office Supplies',
-              'electronics': 'Electronics',
-              'furniture': 'Furniture',
-              'other': 'Other'
-            };
-            return categoryMapping[categoryString] ||
-                   categoryString.split('-').map(word =>
-                     word.charAt(0).toUpperCase() + word.slice(1)
-                   ).join(' ');
-          };
-
-          const options = data.categories.map((categoryName: string) => ({
-            value: categoryName,
-            label: formatCategoryName(categoryName),
-          }));
-
-          // Add the "All Categories" option at the beginning
-          const allCategoriesOption = { value: "all", label: "All Categories" };
-          setCategoryOptions([allCategoriesOption, ...options]);
-          console.log("Categories loaded successfully:", options);
-        }
-      }
+      const options = await categoryService.getCategoryOptions();
+      
+      // Add the "All Categories" option at the beginning
+      const allCategoriesOption = { value: "all", label: "All Categories" };
+      setCategoryOptions([allCategoriesOption, ...options]);
+      console.log("Categories loaded successfully:", options);
     } catch (err) {
       console.error("Error fetching categories:", err);
-      // Keep the default categories if there's an error
     }
   };
 
@@ -106,13 +79,7 @@ const BrowseItemsPage: React.FC = () => {
   };
 
   const [categoryOptions, setCategoryOptions] = useState([
-    { value: "all", label: "All Categories" },
-    { value: "electronics", label: "Electronics" },
-    { value: "office-supplies", label: "Office Supplies" },
-    { value: "cleaning-materials", label: "Cleaning Materials" },
-    { value: "furniture", label: "Furniture" },
-    { value: "software", label: "Software" },
-    { value: "other", label: "Other" },
+    { value: "all", label: "All Categories" }
   ]);
 
   const filteredItems = items.filter((item) => {
