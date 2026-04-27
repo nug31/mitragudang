@@ -243,12 +243,16 @@ app.post("/api/categories", async (req, res) => {
 
         const result = await db.query(
             "INSERT INTO categories (name, description, created_at) VALUES ($1, $2, NOW()) RETURNING *",
-            [name, description]
+            [name, description || ""]
         );
         res.status(201).json({ success: true, category: result.rows[0] });
     } catch (error) {
         console.error("Create category error:", error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            detail: error.detail || "No additional details" 
+        });
     }
 });
 
@@ -259,14 +263,18 @@ app.put("/api/categories/:id", async (req, res) => {
         
         const result = await db.query(
             "UPDATE categories SET name = $1, description = $2 WHERE id = $3 RETURNING *",
-            [name, description, id]
+            [name, description || "", id]
         );
         
         if (result.rowCount === 0) return res.status(404).json({ success: false, message: "Category not found" });
         res.json({ success: true, category: result.rows[0] });
     } catch (error) {
         console.error("Update category error:", error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            detail: error.detail || "No additional details"
+        });
     }
 });
 
