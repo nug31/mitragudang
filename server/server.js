@@ -228,10 +228,56 @@ app.get("/api/stock-history/item/:itemId", async (req, res) => {
 // Categories API
 app.get("/api/categories", async (req, res) => {
     try {
-        const result = await db.query("SELECT DISTINCT category FROM items WHERE category IS NOT NULL ORDER BY category");
-        res.json({ success: true, categories: result.rows.map(r => r.category) });
+        const result = await db.query("SELECT * FROM categories ORDER BY name");
+        res.json({ success: true, categories: result.rows });
     } catch (error) {
-        console.error("Categories error:", error);
+        console.error("Fetch categories error:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post("/api/categories", async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        if (!name) return res.status(400).json({ success: false, message: "Category name is required" });
+
+        const result = await db.query(
+            "INSERT INTO categories (name, description, created_at) VALUES ($1, $2, NOW()) RETURNING *",
+            [name, description]
+        );
+        res.status(201).json({ success: true, category: result.rows[0] });
+    } catch (error) {
+        console.error("Create category error:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.put("/api/categories/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description } = req.body;
+        
+        const result = await db.query(
+            "UPDATE categories SET name = $1, description = $2 WHERE id = $3 RETURNING *",
+            [name, description, id]
+        );
+        
+        if (result.rowCount === 0) return res.status(404).json({ success: false, message: "Category not found" });
+        res.json({ success: true, category: result.rows[0] });
+    } catch (error) {
+        console.error("Update category error:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.delete("/api/categories/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await db.query("DELETE FROM categories WHERE id = $1", [id]);
+        if (result.rowCount === 0) return res.status(404).json({ success: false, message: "Category not found" });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Delete category error:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

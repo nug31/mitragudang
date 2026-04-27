@@ -19,16 +19,15 @@ class CategoryService {
       }
       const data = await response.json();
 
-      // Handle the new API response format: { success: true, categories: [...] }
-      if (data.success && data.categories) {
-        return data.categories.map((categoryName: string, index: number) => ({
-          id: (index + 1).toString(),
-          name: this.formatCategoryName(categoryName),
-          description: `${this.formatCategoryName(categoryName)} items`
+      if (data.success && Array.isArray(data.categories)) {
+        return data.categories.map((cat: any) => ({
+          id: cat.id.toString(),
+          name: cat.name,
+          description: cat.description,
+          created_at: cat.createdAt || cat.created_at
         }));
       }
 
-      // Fallback for old format
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -67,9 +66,9 @@ class CategoryService {
       // Handle the new API response format and use original database values
       if (data.success && data.categories && Array.isArray(data.categories)) {
         console.log("Processing categories:", data.categories); // Debug log
-        return data.categories.map((categoryName: string) => ({
-          value: categoryName, // Use original database value
-          label: this.formatCategoryName(categoryName), // Use formatted display name
+        return data.categories.map((cat: any) => ({
+          value: cat.name, // Use the name as value for items table compatibility
+          label: this.formatCategoryName(cat.name), // Use formatted display name
         }));
       }
 
